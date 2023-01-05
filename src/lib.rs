@@ -1,6 +1,8 @@
 mod lexer;
 mod parser;
 
-pub mod statement;
 #[macro_use]
 pub mod term;
+pub mod statement;
+
+pub mod prelude;
