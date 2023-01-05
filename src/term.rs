@@ -66,10 +66,10 @@ macro_rules! app {
 
 #[macro_export]
 macro_rules! lambda {
-    (λ$param: ident $($params: ident)+. $($body: tt)+) => {
+    (λ $param: ident $($params: ident)+. $($body: tt)+) => {
         $crate::term::Term::abs(stringify!($param), lambda!(λ$($params)+. $($body)+))
     };
-    (λ$param: ident. $($body: tt)+) => {
+    (λ $param: ident. $($body: tt)+) => {
         $crate::term::Term::abs(stringify!($param), lambda!($($body)+))
     };
     ($func: ident $($args: tt)+) => {
