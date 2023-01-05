@@ -2,6 +2,9 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Term<'s> {
     Var(&'s str),
@@ -29,9 +32,9 @@ impl Display for Term<'_> {
             Self::Var(var) => write!(formatter, "{}", var),
             Self::Abs(param, body) => write!(formatter, "λ{}. {}", param, body),
             Self::App(func, arg) => match (func.as_ref(), arg.as_ref()) {
-                (abs @ Self::Abs(_, _), app @ Self::App(_, _)) => write!(formatter, "({}) ({})", abs, app),
-                (abs @ Self::Abs(_, _), _) => write!(formatter, "({}) {}", abs, arg),
-                (_, app @ Self::App(_, _)) => write!(formatter, "{} ({})", func, app),
+                (Self::Abs(_, _), Self::Abs(_, _) | Self::App(_, _)) => write!(formatter, "({}) ({})", func, arg),
+                (Self::Abs(_, _), _) => write!(formatter, "({}) {}", func, arg),
+                (_, Self::Abs(_, _) | Self::App(_, _)) => write!(formatter, "{} ({})", func, arg),
                 _ => write!(formatter, "{} {}", func, arg),
             },
         }
