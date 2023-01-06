@@ -1,9 +1,6 @@
-use std::collections::VecDeque;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
-
-use crate::var::Var;
 
 #[cfg(test)]
 mod tests;
@@ -26,31 +23,6 @@ impl<T> Term<T> {
 
     pub fn app(func: Self, arg: Self) -> Self {
         Self::App(Box::new(func), Box::new(arg))
-    }
-}
-
-impl<'t, T: Clone + Eq> Term<T> {
-    fn into_de_bruijn(&'t self, depth: usize, vars: &mut VecDeque<&'t T>) -> Term<Var<T>> {
-        match self {
-            Self::Var(var) => if let Some(index) = vars.iter().position(|&param| param == var) {
-                Term::var(Var::Bound(index))
-            } else {
-                Term::var(Var::Free(var.clone()))
-            },
-            Self::Abs(param, body) => {
-                vars.push_front(param);
-                let term = Term::abs(Var::Bound(0), body.into_de_bruijn(depth + 1, vars));
-                vars.pop_front();
-                term
-            },
-            Self::App(func, arg) => Term::app(func.into_de_bruijn(depth, vars), arg.into_de_bruijn(depth, vars)),
-        }
-    }
-}
-
-impl<T: Clone + Eq> From<Term<T>> for Term<Var<T>> {
-    fn from(term: Term<T>) -> Self {
-        term.into_de_bruijn(0, &mut VecDeque::new())
     }
 }
 
