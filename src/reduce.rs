@@ -2,13 +2,43 @@ use std::collections::VecDeque;
 
 use crate::term::Term;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Var<T> {
     Bound(usize),
     Free(T),
 }
 
 pub type LocalNamelessTerm<T> = Term<Var<T>>;
+
+impl<T: Clone> LocalNamelessTerm<T> {
+    fn open(&mut self, replacement: &Self) -> &mut Self {
+        match self.open_with(0, replacement) {
+            Term::Abs(_, body) => body,
+            opened => opened,
+        }
+    }
+
+    fn open_with(&mut self, depth: usize, replacement: &Self) -> &mut Self {
+        match self {
+            Term::Var(Var::Free(_)) => self,
+            Term::Var(Var::Bound(index)) => {
+                if *index == depth {
+                    *self = replacement.clone();
+                }
+                self
+            },
+            Term::Abs(_, body) => {
+                body.open_with(depth + 1, replacement);
+                self
+            },
+            Term::App(func, arg) => {
+                func.open_with(depth, replacement);
+                arg.open_with(depth, replacement);
+                self
+            },
+        }
+    }
+}
 
 impl<T: Clone + Eq> Term<T> {
     fn into_local_nameless<'t>(&'t self, depth: usize, vars: &mut VecDeque<&'t T>) -> LocalNamelessTerm<T> {
@@ -20,7 +50,7 @@ impl<T: Clone + Eq> Term<T> {
             },
             Self::Abs(param, body) => {
                 vars.push_front(param);
-                let term = Term::abs(Var::Bound(0), body.into_local_nameless(depth + 1, vars));
+                let term = Term::abs(Var::Free(param.clone()), body.into_local_nameless(depth + 1, vars));
                 vars.pop_front();
                 term
             },
