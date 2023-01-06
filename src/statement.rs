@@ -2,17 +2,16 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
 
-use crate::ident::Ident;
 use crate::term::Term;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum Statement<T> {
-    Bind(Ident<T>, Term<T>),
+    Bind(T, Term<T>),
 }
 
 impl<T> Statement<T> {
     pub fn bind(name: T, term: Term<T>) -> Self {
-        Self::Bind(Ident::free(name), term)
+        Self::Bind(name, term)
     }
 }
 

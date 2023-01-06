@@ -18,7 +18,7 @@ pub enum Token<'s> {
     Equals,
     #[regex(r#"\s+"#)]
     Whitespace,
-    #[regex(r#"#.*"#, Token::line_comment)]
+    #[regex("#.*", Token::line_comment)]
     LineComment(&'s str),
     #[error]
     Unknown,

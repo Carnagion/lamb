@@ -1,60 +1,28 @@
-use std::collections::HashMap;
-use std::collections::VecDeque;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
-use std::hash::Hash;
-
-use crate::ident::Ident;
 
 #[cfg(test)]
 mod tests;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Term<T> {
-    Var(Ident<T>),
-    Abs(Ident<T>, Box<Self>),
+    Var(T),
+    Abs(T, Box<Self>),
     App(Box<Self>, Box<Self>),
 }
 
 impl<T> Term<T> {
-    pub fn var(name: T) -> Self {
-        Self::Var(Ident::free(name))
+    pub fn var(var: T) -> Self {
+        Self::Var(var)
     }
 
     pub fn abs(param: T, body: Self) -> Self {
-        Self::Abs(Ident::free(param), Box::new(body))
+        Self::Abs(param, Box::new(body))
     }
 
     pub fn app(func: Self, arg: Self) -> Self {
         Self::App(Box::new(func), Box::new(arg))
-    }
-}
-
-impl<T: Clone + Eq + Hash> Term<T> {
-    fn rebind(&mut self, ids: &mut HashMap<T, usize>, scopes: &mut HashMap<Ident<T>, VecDeque<usize>>) {
-        match self {
-            Self::Var(ident) => {
-                scopes.get(ident)
-                    .map(|scope| scope.front()
-                        .map(|id| ident.rebind(Some(*id))));
-            },
-            Self::Abs(param, body) => {
-                let (bound, id) = Ident::bound(param.var().clone(), ids);
-                scopes.entry(param.clone())
-                    .or_default()
-                    .push_front(id);
-                body.rebind(ids, scopes);
-                scopes.entry(param.clone())
-                    .or_default()
-                    .pop_front();
-                *param = bound;
-            },
-            Self::App(func, arg) => {
-                func.rebind(ids, scopes);
-                arg.rebind(ids, scopes);
-            },
-        }
     }
 }
 
