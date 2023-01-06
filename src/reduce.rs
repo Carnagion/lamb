@@ -13,25 +13,25 @@ pub type LocalNamelessTerm<T> = Term<Var<T>>;
 impl<T: Clone> LocalNamelessTerm<T> {
     fn open(&mut self, replacement: &Self) -> &mut Self {
         match self.open_with(0, replacement) {
-            Term::Abs(_, body) => body,
+            Self::Abs(_, body) => body,
             opened => opened,
         }
     }
 
     fn open_with(&mut self, depth: usize, replacement: &Self) -> &mut Self {
         match self {
-            Term::Var(Var::Free(_)) => self,
-            Term::Var(Var::Bound(index)) => {
+            Self::Var(Var::Free(_)) => self,
+            Self::Var(Var::Bound(index)) => {
                 if *index == depth {
                     *self = replacement.clone();
                 }
                 self
             },
-            Term::Abs(_, body) => {
+            Self::Abs(_, body) => {
                 body.open_with(depth + 1, replacement);
                 self
             },
-            Term::App(func, arg) => {
+            Self::App(func, arg) => {
                 func.open_with(depth, replacement);
                 arg.open_with(depth, replacement);
                 self
@@ -59,8 +59,33 @@ impl<T: Clone + Eq> Term<T> {
     }
 }
 
+impl<T: Clone> LocalNamelessTerm<T> {
+    fn into_classic<'t>(&'t self, vars: &mut VecDeque<&'t T>) -> Term<T> {
+        match self {
+            Self::Var(Var::Free(var)) => Term::var(var.clone()),
+            Self::Var(Var::Bound(index)) => Term::var(vars[*index].clone()),
+            Self::Abs(param, body) => match param {
+                Var::Free(param) => {
+                    vars.push_front(param);
+                    let term = Term::abs(param.clone(), body.into_classic(vars));
+                    vars.pop_front();
+                    term
+                },
+                Var::Bound(_) => unreachable!(),
+            },
+            Self::App(func, arg) => Term::app(func.into_classic(vars), arg.into_classic(vars)),
+        }
+    }
+}
+
 impl<T: Clone + Eq> From<Term<T>> for LocalNamelessTerm<T> {
     fn from(term: Term<T>) -> Self {
         term.into_local_nameless(0, &mut VecDeque::new())
+    }
+}
+
+impl<T: Clone> From<LocalNamelessTerm<T>> for Term<T> {
+    fn from(term: LocalNamelessTerm<T>) -> Self {
+        term.into_classic(&mut VecDeque::new())
     }
 }
