@@ -2,23 +2,25 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
 
+use crate::ident::Ident;
+
 #[cfg(test)]
 mod tests;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum Term<'s> {
-    Var(&'s str),
-    Abs(&'s str, Box<Self>),
+pub enum Term<T> {
+    Var(Ident<T>),
+    Abs(Ident<T>, Box<Self>),
     App(Box<Self>, Box<Self>),
 }
 
-impl<'s> Term<'s> {
-    pub fn var(name: &'s str) -> Self {
-        Self::Var(name)
+impl<T> Term<T> {
+    pub fn var(name: T) -> Self {
+        Self::Var(Ident::free(name))
     }
 
-    pub fn abs(param: &'s str, body: Self) -> Self {
-        Self::Abs(param, Box::new(body))
+    pub fn abs(param: T, body: Self) -> Self {
+        Self::Abs(Ident::free(param), Box::new(body))
     }
 
     pub fn app(func: Self, arg: Self) -> Self {
@@ -26,7 +28,7 @@ impl<'s> Term<'s> {
     }
 }
 
-impl Display for Term<'_> {
+impl<T: Display> Display for Term<T> {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         match self {
             Self::Var(var) => write!(formatter, "{}", var),

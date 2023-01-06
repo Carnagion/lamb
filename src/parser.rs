@@ -4,14 +4,14 @@ use crate::lexer::Token;
 use crate::statement::Statement;
 use crate::term::Term;
 
-fn statement_parser<'s>() -> impl Parser<Token<'s>, Statement<'s>, Error = Simple<Token<'s>>> {
+fn statement_parser<'s>() -> impl Parser<Token<'s>, Statement<&'s str>, Error = Simple<Token<'s>>> {
     ident_parser().then_ignore(just(Token::Equals).then_ignore(filler_parser()))
         .then(term_parser())
         .then_ignore(just(Token::Dot).then_ignore(filler_parser()))
-        .map(|(name, term)| Statement::Bind(name, term))
+        .map(|(name, term)| Statement::bind(name, term))
 }
 
-fn term_parser<'s>() -> impl Parser<Token<'s>, Term<'s>, Error = Simple<Token<'s>>> {
+fn term_parser<'s>() -> impl Parser<Token<'s>, Term<&'s str>, Error = Simple<Token<'s>>> {
     recursive(|term| {
         let var = ident_parser().map(|ident| Term::var(ident))
             .labelled("variable");
