@@ -6,7 +6,7 @@ use logos::Logos;
 pub enum Token<'s> {
     #[token("λ")]
     Lambda,
-    #[regex(r#"[^λ\.()\s=#]+"#)]
+    #[regex(r"[^λ\.()\s=#]+")]
     Ident(&'s str),
     #[token(".")]
     Dot,
@@ -16,7 +16,7 @@ pub enum Token<'s> {
     CloseParens,
     #[token("=")]
     Equals,
-    #[regex(r#"\s+"#)]
+    #[regex(r"\s+")]
     Whitespace,
     #[regex("#.*", Token::line_comment)]
     LineComment(&'s str),
