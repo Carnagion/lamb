@@ -1,6 +1,9 @@
+use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
+use std::hash::Hash;
 
 use crate::ident::Ident;
 
@@ -25,6 +28,33 @@ impl<T> Term<T> {
 
     pub fn app(func: Self, arg: Self) -> Self {
         Self::App(Box::new(func), Box::new(arg))
+    }
+}
+
+impl<T: Clone + Eq + Hash> Term<T> {
+    fn rebind(&mut self, ids: &mut HashMap<T, usize>, scopes: &mut HashMap<Ident<T>, VecDeque<usize>>) {
+        match self {
+            Self::Var(ident) => {
+                scopes.get(ident)
+                    .map(|scope| scope.front()
+                        .map(|id| ident.rebind(Some(*id))));
+            },
+            Self::Abs(param, body) => {
+                let (bound, id) = Ident::bound(param.var().clone(), ids);
+                scopes.entry(param.clone())
+                    .or_default()
+                    .push_front(id);
+                body.rebind(ids, scopes);
+                scopes.entry(param.clone())
+                    .or_default()
+                    .pop_front();
+                *param = bound;
+            },
+            Self::App(func, arg) => {
+                func.rebind(ids, scopes);
+                arg.rebind(ids, scopes);
+            },
+        }
     }
 }
 
