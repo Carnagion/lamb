@@ -38,28 +38,7 @@ impl<T: Clone> LocalNamelessTerm<T> {
             },
         }
     }
-}
 
-impl<T: Clone + Eq> Term<T> {
-    fn into_local_nameless<'t>(&'t self, vars: &mut VecDeque<&'t T>) -> LocalNamelessTerm<T> {
-        match self {
-            Self::Var(var) => if let Some(index) = vars.iter().position(|&param| param == var) {
-                Term::var(Var::Bound(index))
-            } else {
-                Term::var(Var::Free(var.clone()))
-            },
-            Self::Abs(param, body) => {
-                vars.push_front(param);
-                let term = Term::abs(Var::Free(param.clone()), body.into_local_nameless(vars));
-                vars.pop_front();
-                term
-            },
-            Self::App(func, arg) => Term::app(func.into_local_nameless(vars), arg.into_local_nameless(vars)),
-        }
-    }
-}
-
-impl<T: Clone> LocalNamelessTerm<T> {
     fn into_classic<'t>(&'t self, vars: &mut VecDeque<&'t T>) -> Term<T> {
         match self {
             Self::Var(Var::Free(var)) => Term::var(var.clone()),
@@ -81,6 +60,25 @@ impl<T: Clone> LocalNamelessTerm<T> {
 impl<T: Clone + Eq> From<Term<T>> for LocalNamelessTerm<T> {
     fn from(term: Term<T>) -> Self {
         term.into_local_nameless(&mut VecDeque::new())
+    }
+}
+
+impl<T: Clone + Eq> Term<T> {
+    fn into_local_nameless<'t>(&'t self, vars: &mut VecDeque<&'t T>) -> LocalNamelessTerm<T> {
+        match self {
+            Self::Var(var) => if let Some(index) = vars.iter().position(|&param| param == var) {
+                Term::var(Var::Bound(index))
+            } else {
+                Term::var(Var::Free(var.clone()))
+            },
+            Self::Abs(param, body) => {
+                vars.push_front(param);
+                let term = Term::abs(Var::Free(param.clone()), body.into_local_nameless(vars));
+                vars.pop_front();
+                term
+            },
+            Self::App(func, arg) => Term::app(func.into_local_nameless(vars), arg.into_local_nameless(vars)),
+        }
     }
 }
 
