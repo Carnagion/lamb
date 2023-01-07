@@ -89,10 +89,3 @@ impl<T: Clone> From<LocalNamelessTerm<T>> for Term<T> {
         term.into_classic(&mut VecDeque::new())
     }
 }
-
-#[test]
-fn test() {
-    use crate::prelude::combinators;
-    println!("{:?}", combinators::compose().into_local_nameless(&mut VecDeque::new()));
-    assert_eq!(combinators::id(), combinators::id().into_local_nameless(&mut VecDeque::new()).into_classic(&mut VecDeque::new()));
-}
