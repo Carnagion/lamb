@@ -41,7 +41,7 @@ impl<T: Clone> LocalNamelessTerm<T> {
 }
 
 impl<T: Clone + Eq> Term<T> {
-    fn into_local_nameless<'t>(&'t self, depth: usize, vars: &mut VecDeque<&'t T>) -> LocalNamelessTerm<T> {
+    fn into_local_nameless<'t>(&'t self, vars: &mut VecDeque<&'t T>) -> LocalNamelessTerm<T> {
         match self {
             Self::Var(var) => if let Some(index) = vars.iter().position(|&param| param == var) {
                 Term::var(Var::Bound(index))
@@ -50,11 +50,11 @@ impl<T: Clone + Eq> Term<T> {
             },
             Self::Abs(param, body) => {
                 vars.push_front(param);
-                let term = Term::abs(Var::Free(param.clone()), body.into_local_nameless(depth + 1, vars));
+                let term = Term::abs(Var::Free(param.clone()), body.into_local_nameless(vars));
                 vars.pop_front();
                 term
             },
-            Self::App(func, arg) => Term::app(func.into_local_nameless(depth, vars), arg.into_local_nameless(depth, vars)),
+            Self::App(func, arg) => Term::app(func.into_local_nameless(vars), arg.into_local_nameless(vars)),
         }
     }
 }
@@ -80,7 +80,7 @@ impl<T: Clone> LocalNamelessTerm<T> {
 
 impl<T: Clone + Eq> From<Term<T>> for LocalNamelessTerm<T> {
     fn from(term: Term<T>) -> Self {
-        term.into_local_nameless(0, &mut VecDeque::new())
+        term.into_local_nameless(&mut VecDeque::new())
     }
 }
 
@@ -88,4 +88,11 @@ impl<T: Clone> From<LocalNamelessTerm<T>> for Term<T> {
     fn from(term: LocalNamelessTerm<T>) -> Self {
         term.into_classic(&mut VecDeque::new())
     }
+}
+
+#[test]
+fn test() {
+    use crate::prelude::combinators;
+    println!("{:?}", combinators::compose().into_local_nameless(&mut VecDeque::new()));
+    assert_eq!(combinators::id(), combinators::id().into_local_nameless(&mut VecDeque::new()).into_classic(&mut VecDeque::new()));
 }
