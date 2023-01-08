@@ -66,10 +66,9 @@ impl<T: Clone + Eq> From<Term<T>> for LocalNamelessTerm<T> {
 impl<T: Clone + Eq> Term<T> {
     fn into_local_nameless<'t>(&'t self, vars: &mut VecDeque<&'t T>) -> LocalNamelessTerm<T> {
         match self {
-            Self::Var(var) => if let Some(index) = vars.iter().position(|&param| param == var) {
-                Term::var(Var::Bound(index))
-            } else {
-                Term::var(Var::Free(var.clone()))
+            Self::Var(var) => match vars.iter().position(|&param| param == var) {
+                Some(index) => Term::var(Var::Bound(index)),
+                None => Term::var(Var::Free(var.clone())),
             },
             Self::Abs(param, body) => {
                 vars.push_front(param);
