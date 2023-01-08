@@ -77,11 +77,11 @@ macro_rules! lambda {
     };
     ($func: ident $($args: tt)+) => {
         lambda_fold_apply!($($args)+).into_iter()
-            .fold($crate::term::Term::var(stringify!($func)), |func, arg| $crate::term::Term::app(func, arg))
+            .fold($crate::term::Term::var(stringify!($func)), $crate::term::Term::app)
     };
     (($($func: tt)+) $($args: tt)+) => {
         lambda_fold_apply!($($args)+).into_iter()
-            .fold(lambda!($($func)+), |func, arg| $crate::term::Term::app(func, arg))
+            .fold(lambda!($($func)+), $crate::term::Term::app)
     };
     ($var: ident) => {
         $crate::term::Term::var(stringify!($var))
