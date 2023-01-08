@@ -12,9 +12,9 @@ pub type LocalNamelessTerm<T> = Term<Var<T>>;
 
 impl<T: Clone> LocalNamelessTerm<T> {
     fn open(&mut self, replacement: &Self) -> &mut Self {
-        match self.open_with(0, replacement) {
-            Self::Abs(_, body) => body,
-            opened => opened,
+        match self {
+            Self::Abs(_, body) => body.open_with(0, replacement),
+            term => term.open_with(0, replacement),
         }
     }
 
