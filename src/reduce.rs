@@ -3,12 +3,12 @@ use std::collections::VecDeque;
 use crate::term::Term;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum Var<T> {
+enum Var<T> {
     Bound(usize),
     Free(T),
 }
 
-pub type LocalNamelessTerm<T> = Term<Var<T>>;
+type LocalNamelessTerm<T> = Term<Var<T>>;
 
 impl<T: Clone> LocalNamelessTerm<T> {
     fn open(&mut self, replacement: &Self) -> &mut Self {
