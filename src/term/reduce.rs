@@ -29,10 +29,10 @@ impl<T: Clone> LocalNamelessTerm<T> {
     where
         P: FnMut(&Self, usize) -> bool, {
             (0..).into_iter()
-                .take_while(|count| predicate(self, *count) && self.reduce_step())
+                .take_while(|count| predicate(self, *count) || self.reduce_step())
                 .count()
-    }
-
+        }
+    
     pub fn reduce_limit(&mut self, limit: usize) -> usize {
         self.reduce_while(|_, count| count < limit)
     }
@@ -60,10 +60,7 @@ impl<T: Clone> LocalNamelessTerm<T> {
     fn open(&mut self, depth: usize, replacement: &Self) -> bool {
         match self {
             Self::Var(Var::Bound(index)) => if *index == depth {
-                *self = match replacement {
-                    Self::Var(Var::Bound(index)) => Self::Var(Var::Bound(index + depth)),
-                    _ => replacement.clone(),
-                };
+                *self = replacement.shifted(0, depth);
                 true
             } else {
                 if *index > depth {
@@ -78,6 +75,19 @@ impl<T: Clone> LocalNamelessTerm<T> {
                 let arg_opened = arg.open(depth, replacement);
                 func_opened || arg_opened
             },
+        }
+    }
+
+    fn shifted(&self, depth: usize, amount: usize) -> Self {
+        match self {
+            Self::Var(Var::Bound(index)) => if *index >= depth {
+                Self::var(Var::Bound(*index + amount))
+            } else {
+                Self::var(Var::Bound(*index))
+            },
+            Self::Var(Var::Free(var)) => Self::var(Var::Free(var.clone())),
+            Self::Abs(param, body) => Self::abs(param.clone(), body.shifted(depth + 1, amount)),
+            Self::App(func, arg) => Self::app(func.shifted(depth, amount), arg.shifted(depth, amount)),
         }
     }
 
@@ -161,7 +171,7 @@ impl<T: Clone + Eq> Term<T> {
                 count: local_nameless.reduce_while(predicate),
                 term: (&local_nameless).try_into().unwrap(),
             }
-    }
+        }
 
     pub fn reduced_limit(&self, limit: usize) -> ReducedTerm<T> {
         let mut local_nameless = LocalNamelessTerm::from(self);
