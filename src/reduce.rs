@@ -12,19 +12,21 @@ enum Var<T> {
 type LocalNamelessTerm<T> = Term<Var<T>>;
 
 impl<T: Clone> LocalNamelessTerm<T> {
-    fn reduce(&mut self) {
+    fn reduce_step(&mut self) -> bool {
         match self {
-            Self::Var(_) => (),
-            Self::Abs(_, body) => body.reduce(),
+            Self::Var(_) => false,
+            Self::Abs(_, body) => body.reduce_step(),
             Self::App(func, arg) => match func.as_mut() {
                 Self::Abs(_, body) => {
-                    body.reduce();
+                    body.reduce_step();
                     body.open(0, arg);
                     *self = mem::replace(body, Self::Var(Var::Bound(0)));
+                    true
                 },
                 func => {
-                    func.reduce();
-                    arg.reduce();
+                    let func_reduced = func.reduce_step();
+                    let arg_reduced = arg.reduce_step();
+                    func_reduced || arg_reduced
                 },
             },
         }
@@ -33,7 +35,10 @@ impl<T: Clone> LocalNamelessTerm<T> {
     fn open(&mut self, depth: usize, replacement: &Self) {
         match self {
             Self::Var(Var::Bound(index)) => if *index == depth {
-                *self = replacement.clone();
+                *self = match replacement {
+                    Self::Var(Var::Bound(index)) => Self::Var(Var::Bound(index + depth)),
+                    _ => replacement.clone(),
+                };
             } else if *index > depth {
                 *index -= 1;
             },
