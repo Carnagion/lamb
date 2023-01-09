@@ -13,15 +13,15 @@ fn statement_parser<'s>() -> impl Parser<Token<'s>, Statement<&'s str>, Error = 
 
 fn term_parser<'s>() -> impl Parser<Token<'s>, Term<&'s str>, Error = Simple<Token<'s>>> {
     recursive(|term| {
-        let var = ident_parser().map(|ident| Term::var(ident))
+        let var = ident_parser().map(Term::Var)
             .labelled("variable");
 
         let abs = just(Token::Lambda).then_ignore(filler_parser())
-            .ignore_then(ident_parser())
+            .ignore_then(ident_parser().repeated())
             .then_ignore(just(Token::Dot)
                 .then_ignore(filler_parser()))
             .then(term.clone())
-            .map(|(param, body)| Term::abs(param, body));
+            .foldr(Term::abs);
 
         let parens = term.clone()
             .delimited_by(just(Token::OpenParens).then_ignore(filler_parser()), just(Token::CloseParens).then_ignore(filler_parser()));
@@ -33,7 +33,7 @@ fn term_parser<'s>() -> impl Parser<Token<'s>, Term<&'s str>, Error = Simple<Tok
                 .or(parens.clone())
                 .repeated()
                 .at_least(1))
-            .foldl(|func, arg| Term::app(func, arg));
+            .foldl(Term::app);
 
         abs.or(app)
             .or(var)
