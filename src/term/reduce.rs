@@ -1,6 +1,8 @@
 use std::collections::VecDeque;
 use std::iter;
 use std::mem;
+use std::ops::Deref;
+use std::ops::DerefMut;
 
 use crate::term::Term;
 
@@ -10,6 +12,7 @@ pub enum Var<T> {
     Free(T),
 }
 
+#[derive(Debug)]
 pub enum LocalNamelessError {
     InvalidVarIndex(usize),
     InvalidAbsParam(usize),
@@ -106,7 +109,69 @@ impl<T: Clone + Eq> From<&Term<T>> for LocalNamelessTerm<T> {
     }
 }
 
+#[derive(Debug)]
+pub struct ReducedTerm<T> {
+    count: usize,
+    term: Term<T>,
+}
+
+impl<T> ReducedTerm<T> {
+    pub fn count(&self) -> usize {
+        self.count
+    }
+
+    pub fn term(&self) -> &Term<T> {
+        &self.term
+    }
+}
+
+impl<T> AsRef<Term<T>> for ReducedTerm<T> {
+    fn as_ref(&self) -> &Term<T> {
+        self.term()
+    }
+}
+
+impl<T> Deref for ReducedTerm<T> {
+    type Target = Term<T>;
+
+    fn deref(&self) -> &Self::Target {
+        self.term()
+    }
+}
+
+impl<T> DerefMut for ReducedTerm<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.term
+    }
+}
+
 impl<T: Clone + Eq> Term<T> {
+    pub fn reduced(&self) -> ReducedTerm<T> {
+        let mut local_nameless = LocalNamelessTerm::from(self);
+        ReducedTerm {
+            count: local_nameless.reduce(),
+            term: (&local_nameless).try_into().unwrap(),
+        }
+    }
+
+    pub fn reduced_until<P>(&self, predicate: P) -> ReducedTerm<T>
+    where
+        P: FnMut(&LocalNamelessTerm<T>, usize) -> bool, {
+            let mut local_nameless = LocalNamelessTerm::from(self);
+            ReducedTerm {
+                count: local_nameless.reduce_until(predicate),
+                term: (&local_nameless).try_into().unwrap(),
+            }
+    }
+
+    pub fn reduced_limit(&self, limit: usize) -> ReducedTerm<T> {
+        let mut local_nameless = LocalNamelessTerm::from(self);
+        ReducedTerm {
+            count: local_nameless.reduce_limit(limit),
+            term: (&local_nameless).try_into().unwrap(),
+        }
+    }
+
     fn into_local_nameless<'t>(&'t self, vars: &mut VecDeque<&'t T>) -> LocalNamelessTerm<T> {
         match self {
             Self::Var(var) => match vars.iter().position(|&param| param == var) {
@@ -129,5 +194,11 @@ impl<T: Clone> TryFrom<&LocalNamelessTerm<T>> for Term<T> {
 
     fn try_from(local_nameless: &LocalNamelessTerm<T>) -> Result<Self, Self::Error> {
         local_nameless.into_classic(&mut VecDeque::new())
+    }
+}
+
+impl<T> From<ReducedTerm<T>> for Term<T> {
+    fn from(reduced: ReducedTerm<T>) -> Self {
+        reduced.term
     }
 }
