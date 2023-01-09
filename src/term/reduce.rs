@@ -87,7 +87,7 @@ impl<T: Clone> LocalNamelessTerm<T> {
         }
     }
 
-    fn into_classic<'t>(&'t self, vars: &mut VecDeque<&'t T>) -> Result<Term<T>, LocalNamelessError> {
+    fn to_classic<'t>(&'t self, vars: &mut VecDeque<&'t T>) -> Result<Term<T>, LocalNamelessError> {
         match self {
             Self::Var(Var::Bound(index)) => match vars.get(*index) {
                 Some(&var) => Ok(Term::var(var.clone())),
@@ -98,19 +98,19 @@ impl<T: Clone> LocalNamelessTerm<T> {
                 Var::Bound(index) => Err(LocalNamelessError::InvalidAbsParam(*index)),
                 Var::Free(param) => {
                     vars.push_front(param);
-                    let term = Term::abs(param.clone(), body.into_classic(vars)?);
+                    let term = Term::abs(param.clone(), body.to_classic(vars)?);
                     vars.pop_front();
                     Ok(term)
                 },
             },
-            Self::App(func, arg) => Ok(Term::app(func.into_classic(vars)?, arg.into_classic(vars)?)),
+            Self::App(func, arg) => Ok(Term::app(func.to_classic(vars)?, arg.to_classic(vars)?)),
         }
     }
 }
 
 impl<T: Clone + Eq> From<&Term<T>> for LocalNamelessTerm<T> {
     fn from(classic: &Term<T>) -> Self {
-        classic.into_local_nameless(&mut VecDeque::new())
+        classic.to_local_nameless(&mut VecDeque::new())
     }
 }
 
@@ -177,7 +177,7 @@ impl<T: Clone + Eq> Term<T> {
         }
     }
 
-    fn into_local_nameless<'t>(&'t self, vars: &mut VecDeque<&'t T>) -> LocalNamelessTerm<T> {
+    fn to_local_nameless<'t>(&'t self, vars: &mut VecDeque<&'t T>) -> LocalNamelessTerm<T> {
         match self {
             Self::Var(var) => match vars.iter().position(|&param| param == var) {
                 Some(index) => LocalNamelessTerm::var(Var::Bound(index)),
@@ -185,11 +185,11 @@ impl<T: Clone + Eq> Term<T> {
             },
             Self::Abs(param, body) => {
                 vars.push_front(param);
-                let term = LocalNamelessTerm::abs(Var::Free(param.clone()), body.into_local_nameless(vars));
+                let term = LocalNamelessTerm::abs(Var::Free(param.clone()), body.to_local_nameless(vars));
                 vars.pop_front();
                 term
             },
-            Self::App(func, arg) => LocalNamelessTerm::app(func.into_local_nameless(vars), arg.into_local_nameless(vars)),
+            Self::App(func, arg) => LocalNamelessTerm::app(func.to_local_nameless(vars), arg.to_local_nameless(vars)),
         }
     }
 }
@@ -198,7 +198,7 @@ impl<T: Clone> TryFrom<&LocalNamelessTerm<T>> for Term<T> {
     type Error = LocalNamelessError;
 
     fn try_from(local_nameless: &LocalNamelessTerm<T>) -> Result<Self, Self::Error> {
-        local_nameless.into_classic(&mut VecDeque::new())
+        local_nameless.to_classic(&mut VecDeque::new())
     }
 }
 
