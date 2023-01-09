@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::collections::VecDeque;
 use std::iter;
 use std::mem;
@@ -59,10 +60,10 @@ impl<T: Clone> LocalNamelessTerm<T> {
 
     fn open(&mut self, depth: usize, replacement: &Self) {
         match self {
-            Self::Var(Var::Bound(index)) => if *index == depth {
-                *self = replacement.shifted(0, depth);
-            } else if *index > depth {
-                *index -= 1;
+            Self::Var(Var::Bound(index)) => match (*index).cmp(&depth) {
+                Ordering::Equal => *self = replacement.shifted(0, depth),
+                Ordering::Greater => *index -= 1,
+                Ordering::Less => (),
             },
             Self::Var(Var::Free(_)) => (),
             Self::Abs(_, body) => body.open(depth + 1, replacement),
