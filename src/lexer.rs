@@ -1,4 +1,3 @@
-use logos;
 use logos::Lexer;
 use logos::Logos;
 
