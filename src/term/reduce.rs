@@ -25,17 +25,16 @@ impl<T: Clone> LocalNamelessTerm<T> {
         iter::from_fn(|| self.reduce_step().then_some(())).count()
     }
 
-    pub fn reduce_until<P>(&mut self, mut predicate: P) -> usize
+    pub fn reduce_while<P>(&mut self, mut predicate: P) -> usize
     where
         P: FnMut(&Self, usize) -> bool, {
-            (1..).into_iter()
+            (0..).into_iter()
                 .take_while(|count| predicate(self, *count) && self.reduce_step())
-                .last()
-                .unwrap_or_default()
+                .count()
     }
 
     pub fn reduce_limit(&mut self, limit: usize) -> usize {
-        self.reduce_until(|_, count| count >= limit)
+        self.reduce_while(|_, count| count < limit)
     }
 
     pub fn reduce_step(&mut self) -> bool {
@@ -159,7 +158,7 @@ impl<T: Clone + Eq> Term<T> {
         P: FnMut(&LocalNamelessTerm<T>, usize) -> bool, {
             let mut local_nameless = LocalNamelessTerm::from(self);
             ReducedTerm {
-                count: local_nameless.reduce_until(predicate),
+                count: local_nameless.reduce_while(predicate),
                 term: (&local_nameless).try_into().unwrap(),
             }
     }
