@@ -43,10 +43,10 @@ impl<T: Clone> LocalNamelessTerm<T> {
             Self::Abs(_, body) => body.reduce_step(),
             Self::App(func, arg) => match func.as_mut() {
                 Self::Abs(_, body) => {
-                    let body_reduced = body.reduce_step();
-                    let body_opened = body.open(0, arg);
+                    body.reduce_step();
+                    body.open(0, arg);
                     *self = mem::replace(body, Self::Var(Var::Bound(0)));
-                    body_reduced || body_opened
+                    true
                 },
                 func => {
                     let func_reduced = func.reduce_step();
@@ -57,23 +57,18 @@ impl<T: Clone> LocalNamelessTerm<T> {
         }
     }
 
-    fn open(&mut self, depth: usize, replacement: &Self) -> bool {
+    fn open(&mut self, depth: usize, replacement: &Self) {
         match self {
             Self::Var(Var::Bound(index)) => if *index == depth {
                 *self = replacement.shifted(0, depth);
-                true
-            } else {
-                if *index > depth {
-                    *index -= 1;
-                }
-                false
+            } else if *index > depth {
+                *index -= 1;
             },
-            Self::Var(Var::Free(_)) => false,
+            Self::Var(Var::Free(_)) => (),
             Self::Abs(_, body) => body.open(depth + 1, replacement),
             Self::App(func, arg) => {
-                let func_opened = func.open(depth, replacement);
-                let arg_opened = arg.open(depth, replacement);
-                func_opened || arg_opened
+                func.open(depth, replacement);
+                arg.open(depth, replacement);
             },
         }
     }
