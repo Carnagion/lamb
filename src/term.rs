@@ -2,6 +2,8 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
 
+pub mod reduce;
+
 #[cfg(test)]
 mod tests;
 

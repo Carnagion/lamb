@@ -47,7 +47,7 @@ impl<T: Clone> LocalNamelessTerm<T> {
             Self::App(func, arg) => {
                 func.open(depth, replacement);
                 arg.open(depth, replacement);
-            }
+            },
         }
     }
 
