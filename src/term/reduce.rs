@@ -1,11 +1,32 @@
 use std::cmp::Ordering;
 use std::collections::VecDeque;
 use std::iter;
-use std::mem;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
 use crate::term::Term;
+
+pub mod normal;
+
+pub trait BetaReduce<T> {
+    fn beta_reduce_step(term: &mut Term<T>) -> bool;
+
+    fn beta_reduce(term: &mut Term<T>) -> usize {
+        iter::from_fn(|| Self::beta_reduce_step(term).then_some(())).count()
+    }
+
+    fn beta_reduce_while<P>(term: &mut Term<T>, mut predicate: P) -> usize
+    where
+        P: FnMut(&Term<T>, usize) -> bool, {
+            (0..).into_iter()
+                .take_while(|count| predicate(term, *count) || Self::beta_reduce_step(term))
+                .count()
+        }
+    
+    fn beta_reduce_limit(term: &mut Term<T>, limit: usize) -> usize {
+        Self::beta_reduce_while(term, |_, count| count < limit)
+    }
+}
 
 /// A wrapper around a variable indicating whether it is [free](https://en.wikipedia.org/wiki/Lambda_calculus#Free_and_bound_variables) or [bound](https://en.wikipedia.org/wiki/Lambda_calculus#Free_and_bound_variables).
 /// 
@@ -31,40 +52,23 @@ pub enum LocalNamelessError {
 pub type LocalNamelessTerm<T> = Term<Var<T>>;
 
 impl<T: Clone> LocalNamelessTerm<T> {
-    pub fn reduce(&mut self) -> usize {
-        iter::from_fn(|| self.reduce_step().then_some(())).count()
+    pub fn beta_reduce<B: BetaReduce<Var<T>>>(&mut self) -> usize {
+        B::beta_reduce(self)
     }
 
-    pub fn reduce_while<P>(&mut self, mut predicate: P) -> usize
+    pub fn beta_reduce_while<B, P>(&mut self, predicate: P) -> usize
     where
+        B: BetaReduce<Var<T>>,
         P: FnMut(&Self, usize) -> bool, {
-            (0..).into_iter()
-                .take_while(|count| predicate(self, *count) || self.reduce_step())
-                .count()
+            B::beta_reduce_while(self, predicate)
         }
     
-    pub fn reduce_limit(&mut self, limit: usize) -> usize {
-        self.reduce_while(|_, count| count < limit)
+    pub fn beta_reduce_limit<B: BetaReduce<Var<T>>>(&mut self, limit: usize) -> usize {
+        B::beta_reduce_limit(self, limit)
     }
 
-    pub fn reduce_step(&mut self) -> bool {
-        match self {
-            Self::Var(_) => false,
-            Self::Abs(_, body) => body.reduce_step(),
-            Self::App(func, arg) => match func.as_mut() {
-                Self::Abs(_, body) => {
-                    body.reduce_step();
-                    body.open(0, arg);
-                    *self = mem::replace(body, Self::Var(Var::Bound(0)));
-                    true
-                },
-                func => {
-                    let func_reduced = func.reduce_step();
-                    let arg_reduced = arg.reduce_step();
-                    func_reduced || arg_reduced
-                },
-            },
-        }
+    pub fn beta_reduce_step<B: BetaReduce<Var<T>>>(&mut self) -> bool {
+        B::beta_reduce_step(self)
     }
 
     fn open(&mut self, depth: usize, replacement: &Self) {
@@ -160,28 +164,29 @@ impl<T> DerefMut for ReducedTerm<T> {
 }
 
 impl<T: Clone + Eq> Term<T> {
-    pub fn reduced(&self) -> ReducedTerm<T> {
+    pub fn beta_reduced<B: BetaReduce<Var<T>>>(&self) -> ReducedTerm<T> {
         let mut local_nameless = LocalNamelessTerm::from(self);
         ReducedTerm {
-            count: local_nameless.reduce(),
+            count: local_nameless.beta_reduce::<B>(),
             term: (&local_nameless).try_into().unwrap(),
         }
     }
 
-    pub fn reduced_until<P>(&self, predicate: P) -> ReducedTerm<T>
+    pub fn beta_reduced_until<B, P>(&self, predicate: P) -> ReducedTerm<T>
     where
+        B: BetaReduce<Var<T>>,
         P: FnMut(&LocalNamelessTerm<T>, usize) -> bool, {
             let mut local_nameless = LocalNamelessTerm::from(self);
             ReducedTerm {
-                count: local_nameless.reduce_while(predicate),
+                count: local_nameless.beta_reduce_while::<B, P>(predicate),
                 term: (&local_nameless).try_into().unwrap(),
             }
         }
 
-    pub fn reduced_limit(&self, limit: usize) -> ReducedTerm<T> {
+    pub fn beta_reduced_limit<B: BetaReduce<Var<T>>>(&self, limit: usize) -> ReducedTerm<T> {
         let mut local_nameless = LocalNamelessTerm::from(self);
         ReducedTerm {
-            count: local_nameless.reduce_limit(limit),
+            count: local_nameless.beta_reduce_limit::<B>(limit),
             term: (&local_nameless).try_into().unwrap(),
         }
     }
