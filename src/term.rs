@@ -165,9 +165,9 @@ macro_rules! app {
     }};
 }
 
-/// Constructs a [Term] using syntax as close as possible to that of standard untyped lambda calculus.
+/// Constructs a [Term] using standard [untyped lambda calculus notation](https://en.wikipedia.org/wiki/Lambda_calculus#Notation).
 /// 
-/// This macro allows constructing arbitrary [Term]s using standard lambda calculus syntax.
+/// This macro allows constructing arbitrary [Term]s using syntax that closely matches the standard syntax of untyped lambda calculus.
 /// It supports syntax sugar for multiple formal parameter and multiple application.
 /// 
 /// Abstraction bodies extend as far as possible to the right, i.e. `λa. b c a` is interpreted as `λa. (b c a)`.
@@ -176,7 +176,7 @@ macro_rules! app {
 /// Some whitespace is necessary after each `λ`, otherwise Rust will process the `λ` as part of an identifier.
 /// i.e. `λx. x` will produce invalid syntax, but `λ x. x` will parse correctly.
 /// 
-/// Whitespace is also necessary between two terms being applied together, unless one or both of the terms are enclosed in parentheses (`()`).
+/// Whitespace is also necessary between two [Term]s being applied together, unless one or both of the [Term]s are enclosed in parentheses (`()`).
 /// i.e. `xy` will be parsed as a variable `xy`, but `x y` or `x(y)` will be parsed as `x` applied to `y`.
 /// 
 /// # Examples

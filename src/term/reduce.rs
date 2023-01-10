@@ -7,9 +7,15 @@ use std::ops::DerefMut;
 
 use crate::term::Term;
 
+/// A wrapper around a variable indicating whether it is [free](https://en.wikipedia.org/wiki/Lambda_calculus#Free_and_bound_variables) or [bound](https://en.wikipedia.org/wiki/Lambda_calculus#Free_and_bound_variables).
+/// 
+/// Free variables are represented using their original identifier.
+/// Bound variables are represented using their [De Bruijn index](https://en.wikipedia.org/wiki/De_Bruijn_index), starting from 0.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Var<T> {
+    /// A bound variable represented as a De Bruijn index.
     Bound(usize),
+    /// A free variable represented as its original identifier.
     Free(T),
 }
 
@@ -19,6 +25,9 @@ pub enum LocalNamelessError {
     InvalidAbsParam(usize),
 }
 
+/// The [locally nameless representation](https://www.chargueraud.org/softs/ln/) of a [Term].
+/// 
+/// Variables are wrapped in [Var]s, which avoids the need for α-conversion when substituting or β-reducing [Term]s.
 pub type LocalNamelessTerm<T> = Term<Var<T>>;
 
 impl<T: Clone> LocalNamelessTerm<T> {
