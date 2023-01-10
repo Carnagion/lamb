@@ -1,3 +1,5 @@
+//! Traits and functions for β-reduction of [Term]s.
+
 use std::cmp::Ordering;
 use std::collections::VecDeque;
 use std::iter;

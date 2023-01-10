@@ -1,3 +1,5 @@
+//! Untyped lambda calculus [Term]s.
+
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;

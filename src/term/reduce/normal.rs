@@ -1,9 +1,14 @@
+//! The normal-order β-reduction strategy.
+
 use std::mem;
 
 use crate::term::reduce::BetaReduce;
 use crate::term::reduce::LocalNamelessTerm;
 use crate::term::reduce::Var;
 
+/// The normal-order β-reduction strategy for [Term](crate::term::Term)s.
+/// 
+/// This strategy reduces the leftmost, outermost β-redexes first.
 pub struct Normal;
 
 impl<T: Clone> BetaReduce<Var<T>> for Normal {
