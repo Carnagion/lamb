@@ -7,7 +7,7 @@ pub mod reduce;
 #[cfg(test)]
 mod tests;
 
-/// A lambda calculus [term](https://en.wikipedia.org/wiki/Lambda_calculus#Lambda_terms), which is either a variable, an abstraction, or an application.
+/// A lambda calculus term, which is either a variable, an abstraction, or an application.
 /// 
 /// [Term]s can be constructed in multiple ways:
 /// - The [lambda!](crate::lambda) macro
@@ -165,7 +165,7 @@ macro_rules! app {
     }};
 }
 
-/// Constructs a [Term] using standard [untyped lambda calculus notation](https://en.wikipedia.org/wiki/Lambda_calculus#Notation).
+/// Constructs a [Term] using standard untyped lambda calculus notation.
 /// 
 /// This macro allows constructing arbitrary [Term]s using syntax that closely matches the standard syntax of untyped lambda calculus.
 /// It supports syntax sugar for multiple formal parameter and multiple application.
