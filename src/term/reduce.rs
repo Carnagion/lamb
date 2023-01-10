@@ -8,13 +8,22 @@ use crate::term::Term;
 
 pub mod normal;
 
+/// Represents a [β-reduction](https://en.wikipedia.org/wiki/Lambda_calculus#%CE%B2-reduction) [strategy](https://en.wikipedia.org/wiki/Lambda_calculus#Reduction_strategies) for [Term]s.
+/// 
+/// The only associated function required when `impl`ementing this trait is [BetaReduce::beta_reduce_step].
+/// The other associated functions have default implementations that rely on [BetaReduce::beta_reduce_step], but can be overridden with custom implementations if necessary.
 pub trait BetaReduce<T> {
+    /// Performs one step of β-reduction on the [Term], in-place, and returns a value indicating whether reduction was performed or not.
+    /// 
+    /// Implementations of this function should return `false` if the [Term] is in [β-normal form](https://en.wikipedia.org/wiki/Beta_normal_form) (i.e. no more β-reduction is possible).
     fn beta_reduce_step(term: &mut Term<T>) -> bool;
 
+    /// Attempts to fully β-reduce the [Term] in-place until it reaches β-normal form, and returns the number of reduction steps performed.
     fn beta_reduce(term: &mut Term<T>) -> usize {
         iter::from_fn(|| Self::beta_reduce_step(term).then_some(())).count()
     }
 
+    /// Attempts to β-reduce the [Term] in-place until it reaches β-normal form or the predicate returns `false`, and returns the number of reduction steps performed.
     fn beta_reduce_while<P>(term: &mut Term<T>, mut predicate: P) -> usize
     where
         P: FnMut(&Term<T>, usize) -> bool, {
@@ -23,6 +32,7 @@ pub trait BetaReduce<T> {
                 .count()
         }
     
+    /// Attempts to β-reduce the [Term] in-place until it reaches β-normal form or the number of reduction steps performed crosses a limit, and returns the latter.
     fn beta_reduce_limit(term: &mut Term<T>, limit: usize) -> usize {
         Self::beta_reduce_while(term, |_, count| count < limit)
     }
@@ -40,22 +50,37 @@ pub enum Var<T> {
     Free(T),
 }
 
+/// Represents possible errors that can occur when converting a [LocalNamelessTerm] to a regular (classic) [Term].
+/// 
+/// In most cases, there is no possibility of these errors occurring, as all functions that produce or modify [LocalNamelessTerm]s do so in a controlled, deterministic fashion.
+/// The only way these errors could arise is if [LocalNamelessTerm]s were constructed or modified manually (and incorrectly).
 #[derive(Debug)]
 pub enum LocalNamelessError {
+    /// The De Bruijn index of a variable is out-of-bounds.
+    /// 
+    /// This implementation represents free variables using [Var::Free].
+    /// Therefore, this error can only occur if the De Bruijn index of a variable is greater than or equal to the number of abstractions it resides in, making it bound to a non-existent formal parameter.
     InvalidVarIndex(usize),
+    /// The formal parameter of an abstraction is a [Var::Bound] and not a [Var::Free].
+    /// 
+    /// This implementation stores all formal parameters of abstractions as a [Var::Free] to retain identifier information.
+    /// Therefore, this error can only occur if a formal parameter is incorrectly stored as a [Var::Bound], making it impossible to retrieve its original identifier.
     InvalidAbsParam(usize),
 }
 
 /// The [locally nameless representation](https://www.chargueraud.org/softs/ln/) of a [Term].
 /// 
 /// Variables are wrapped in [Var]s, which avoids the need for α-conversion when substituting or β-reducing [Term]s.
+/// However, fully β-reducing a [Term] using this implementation requires two extra steps - converting the [Term] to a [LocalNamelessTerm] and back.
 pub type LocalNamelessTerm<T> = Term<Var<T>>;
 
 impl<T: Clone> LocalNamelessTerm<T> {
+    /// Attempts to fully β-reduce the [LocalNamelessTerm] in-place using the specified [BetaReduce] implementation.
     pub fn beta_reduce<B: BetaReduce<Var<T>>>(&mut self) -> usize {
         B::beta_reduce(self)
     }
 
+    /// Attempts to β-reduce the [LocalNamelessTerm] in-place using the specified [BetaReduce] implementation while a predicate holds true.
     pub fn beta_reduce_while<B, P>(&mut self, predicate: P) -> usize
     where
         B: BetaReduce<Var<T>>,
@@ -63,10 +88,12 @@ impl<T: Clone> LocalNamelessTerm<T> {
             B::beta_reduce_while(self, predicate)
         }
     
-    pub fn beta_reduce_limit<B: BetaReduce<Var<T>>>(&mut self, limit: usize) -> usize {
+    /// Attempts to β-reduce the [LocalNamelessTerm] in-place up to a certain limit using the specified [BetaReduce] implementation.
+        pub fn beta_reduce_limit<B: BetaReduce<Var<T>>>(&mut self, limit: usize) -> usize {
         B::beta_reduce_limit(self, limit)
     }
 
+    /// Attempts to β-reduce the [LocalNamelessTerm] once using the specified [BetaReduce] implementation.
     pub fn beta_reduce_step<B: BetaReduce<Var<T>>>(&mut self) -> bool {
         B::beta_reduce_step(self)
     }
@@ -172,7 +199,7 @@ impl<T: Clone + Eq> Term<T> {
         }
     }
 
-    pub fn beta_reduced_until<B, P>(&self, predicate: P) -> ReducedTerm<T>
+    pub fn beta_reduced_while<B, P>(&self, predicate: P) -> ReducedTerm<T>
     where
         B: BetaReduce<Var<T>>,
         P: FnMut(&LocalNamelessTerm<T>, usize) -> bool, {
