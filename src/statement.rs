@@ -2,7 +2,7 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
 
-use crate::term::Term;
+use crate::Term;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum Statement<T> {

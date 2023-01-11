@@ -6,7 +6,7 @@ use crate::BetaReduce;
 use crate::LocalNamelessTerm;
 use crate::Var;
 
-/// The normal-order β-reduction strategy for [Term](crate::term::Term)s.
+/// The normal-order β-reduction strategy for [Term](crate::Term)s.
 /// 
 /// This strategy reduces the leftmost, outermost β-redexes first.
 pub struct Normal;

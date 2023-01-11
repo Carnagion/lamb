@@ -78,7 +78,7 @@ impl<T: Display> Display for Term<T> {
 #[macro_export]
 macro_rules! var {
     ($name: ident) => {
-        $crate::term::Term::var(stringify!($name))
+        $crate::Term::var(stringify!($name))
     };
 }
 
@@ -122,10 +122,10 @@ macro_rules! var {
 #[macro_export]
 macro_rules! abs {
     ($param: ident. $body: expr) => {
-        $crate::term::Term::abs(stringify!($param), $body)
+        $crate::Term::abs(stringify!($param), $body)
     };
     ($param: ident $($rest: ident)+. $body: expr) => {{
-        $crate::term::Term::abs(stringify!($param), abs!($($rest)+. $body))
+        $crate::Term::abs(stringify!($param), abs!($($rest)+. $body))
     }};
 }
 
@@ -163,7 +163,7 @@ macro_rules! abs {
 macro_rules! app {
     ($func: expr, $($arg: expr),+) => {{
         let mut app = $func;
-        $(app = $crate::term::Term::app(app, $arg);)+
+        $(app = $crate::Term::app(app, $arg);)+
         app
     }};
 }
@@ -227,27 +227,27 @@ macro_rules! app {
 #[macro_export]
 macro_rules! lambda {
     (λ $param: ident $($params: ident)+. $($body: tt)+) => {
-        $crate::term::Term::abs(stringify!($param), lambda!(λ$($params)+. $($body)+))
+        $crate::Term::abs(stringify!($param), lambda!(λ$($params)+. $($body)+))
     };
     (λ $param: ident. $($body: tt)+) => {
-        $crate::term::Term::abs(stringify!($param), lambda!($($body)+))
+        $crate::Term::abs(stringify!($param), lambda!($($body)+))
     };
     ($func: ident $($args: tt)+) => {
         lambda!(~internal $($args)+).into_iter()
-            .fold($crate::term::Term::var(stringify!($func)), $crate::term::Term::app)
+            .fold($crate::Term::var(stringify!($func)), $crate::Term::app)
     };
     (($($func: tt)+) $($args: tt)+) => {
         lambda!(~internal $($args)+).into_iter()
-            .fold(lambda!($($func)+), $crate::term::Term::app)
+            .fold(lambda!($($func)+), $crate::Term::app)
     };
     ($var: ident) => {
-        $crate::term::Term::var(stringify!($var))
+        $crate::Term::var(stringify!($var))
     };
     (($($term: tt)+)) => {
         lambda!($($term)+)
     };
     (~internal $func: ident $($args: tt)+) => {
-        std::iter::once($crate::term::Term::var(stringify!($func))).chain(lambda!(~internal $($args)+))
+        std::iter::once($crate::Term::var(stringify!($func))).chain(lambda!(~internal $($args)+))
     };
     (~internal ($($func: tt)+) $($args: tt)+) => {
         std::iter::once(lambda!($($func)+)).chain(lambda!(~internal $($args)+))
