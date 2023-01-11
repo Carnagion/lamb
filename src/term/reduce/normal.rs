@@ -2,9 +2,9 @@
 
 use std::mem;
 
-use crate::term::reduce::BetaReduce;
-use crate::term::reduce::LocalNamelessTerm;
-use crate::term::reduce::Var;
+use crate::BetaReduce;
+use crate::LocalNamelessTerm;
+use crate::Var;
 
 /// The normal-order β-reduction strategy for [Term](crate::term::Term)s.
 /// 

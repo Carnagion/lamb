@@ -1,4 +1,4 @@
-use crate::term::Term;
+use crate::Term;
 
 /// The function composition combinator `B`.
 ///

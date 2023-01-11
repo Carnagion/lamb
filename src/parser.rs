@@ -1,8 +1,8 @@
 use chumsky::prelude::*;
 
 use crate::lexer::Token;
-use crate::statement::Statement;
-use crate::term::Term;
+use crate::Statement;
+use crate::Term;
 
 fn statement_parser<'s>() -> impl Parser<Token<'s>, Statement<&'s str>, Error = Simple<Token<'s>>> {
     ident_parser().then_ignore(just(Token::Equals).then_ignore(filler_parser()))

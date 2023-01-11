@@ -6,9 +6,10 @@ use std::iter;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
-use crate::term::Term;
+use crate::Term;
 
 pub mod normal;
+pub use normal::*;
 
 /// Represents a β-reduction strategy for [Term]s.
 /// 

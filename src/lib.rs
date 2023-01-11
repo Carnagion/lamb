@@ -42,7 +42,7 @@
 //! It allows implementing different strategies for β-reducing [Term]s, making this crate highly extendable.
 //! ```
 //! use lambda::lambda;
-//! use lambda::term::reduce::normal::Normal;
+//! use lambda::Normal;
 //! 
 //! let term = lambda!((λ x. z) ((λ w. w w w) (λ w. w w w)));
 //! let reduced = term.reduced::<Normal>();
@@ -52,8 +52,8 @@
 //! [LocalNamelessTerm]s can be β-reduced in-place, whereas regular [Term]s must first be converted to [LocalNamelessTerm]s for β-reduction.
 //! ```
 //! use lambda::lambda;
-//! use lambda::term::reduce::LocalNamelessTerm;
-//! use lambda::term::reduce::normal::Normal;
+//! use lambda::LocalNamelessTerm;
+//! use lambda::Normal;
 //! 
 //! let term = lambda!((λ x. z) ((λ w. w w w) (λ w. w. w w)));
 //! let local_nameless_term = LocalNamelessTerm::from(&term);
@@ -61,16 +61,15 @@
 //! ```
 //! 
 //! *Note: Converting a [Term] to a [LocalNamelessTerm] also does not consume the original [Term], leaving it available for further use if necessary.*
-//! 
-//! [Term]: crate::term::Term
-//! [BetaReduce]: crate::term::reduce::BetaReduce
-//! [LocalNamelessTerm]: crate::term::reduce::LocalNamelessTerm
 
 mod lexer;
 mod parser;
 
 #[macro_use]
 pub mod term;
+pub use term::*;
+
 pub mod statement;
+pub use statement::*;
 
 pub mod prelude;

@@ -5,6 +5,7 @@ use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
 
 pub mod reduce;
+pub use reduce::*;
 
 #[cfg(test)]
 mod tests;
