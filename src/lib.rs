@@ -5,9 +5,9 @@
 //! At the core of this crate is the [Term] type, which represents an untyped lambda calculus term.
 //! A [Term] can be either a variable, an abstraction, or an application.
 //! 
-//! [Term]s are generic over their identifier type - meaning variables and formal parameters are not constrained to being `&str`s or `String`s, and can be of any desired type.
+//! [Term]s are generic over their identifier type - meaning variables and formal parameters are not constrained to being any one particular type such as strings.
 //! 
-//! *Note: Most operations on [Term]s require the identifier type to `impl`ement `Clone` or `Eq`, but this is a trivial task.*
+//! *Note: Most operations on [Term]s require the identifier type to `impl`ement [Clone] and [Eq], but this is a trivial task.*
 //! 
 //! # Constructing terms
 //! 
