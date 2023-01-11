@@ -67,4 +67,5 @@ pub use term::*;
 pub mod statement;
 pub use statement::*;
 
+#[cfg(feature = "prelude")]
 pub mod prelude;

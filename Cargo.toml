@@ -7,3 +7,7 @@ edition = "2021"
 ariadne = "0.1.5"
 chumsky = "0.8.0"
 logos = "0.12.1"
+
+[features]
+default = ["prelude"]
+prelude = []
