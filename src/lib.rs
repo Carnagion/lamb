@@ -61,11 +61,10 @@
 pub mod term;
 pub use term::*;
 
-pub mod statement;
-pub use statement::*;
-
-mod lexer;
-mod parser;
-
 #[cfg(feature = "prelude")]
 pub mod prelude;
+
+#[cfg(feature = "repl")]
+pub mod repl;
+#[cfg(feature = "repl")]
+pub use repl::*;
