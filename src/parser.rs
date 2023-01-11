@@ -1,8 +1,8 @@
 use chumsky::prelude::*;
 
-use crate::lexer::Token;
 use crate::Statement;
 use crate::Term;
+use crate::lexer::Token;
 
 fn statement_parser<'s>() -> impl Parser<Token<'s>, Statement<&'s str>, Error = Simple<Token<'s>>> {
     ident_parser().then_ignore(just(Token::Equals).then_ignore(filler_parser()))
@@ -13,7 +13,7 @@ fn statement_parser<'s>() -> impl Parser<Token<'s>, Statement<&'s str>, Error = 
 
 fn term_parser<'s>() -> impl Parser<Token<'s>, Term<&'s str>, Error = Simple<Token<'s>>> {
     recursive(|term| {
-        let var = ident_parser().map(Term::Var)
+        let var = ident_parser().map(Term::var)
             .labelled("variable");
 
         let abs = just(Token::Lambda).then_ignore(filler_parser())
