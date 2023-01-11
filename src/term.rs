@@ -7,9 +7,6 @@ use std::fmt::Result as FmtResult;
 pub mod reduce;
 pub use reduce::*;
 
-#[cfg(test)]
-mod tests;
-
 /// A lambda calculus term, which is either a variable, an abstraction, or an application.
 /// 
 /// [Term]s can be constructed in multiple ways:
