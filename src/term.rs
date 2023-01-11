@@ -69,8 +69,7 @@ impl<T: Display> Display for Term<T> {
 /// # Examples
 /// 
 /// ```
-/// use lambda::var;
-/// use lambda::term::Term;
+/// use lambda::*;
 /// 
 /// let var_term = var!(x);
 /// assert_eq!(var_term, Term::var("x"));
@@ -93,10 +92,7 @@ macro_rules! var {
 /// # Examples
 /// 
 /// ```
-/// use lambda::var;
-/// use lambda::abs;
-/// use lambda::app;
-/// use lambda::term::Term;
+/// use lambda::*;
 /// 
 /// let term_a = abs!(x. var!(x));
 /// assert_eq!(term_a, Term::abs("x", Term::var("x")));
@@ -140,10 +136,7 @@ macro_rules! abs {
 /// # Examples
 /// 
 /// ```
-/// use lambda::var;
-/// use lambda::abs;
-/// use lambda::app;
-/// use lambda::term::Term;
+/// use lambda::*;
 /// 
 /// let term_a = app!(var!(x), var!(y));
 /// assert_eq!(term_a, Term::app(
@@ -185,8 +178,7 @@ macro_rules! app {
 /// # Examples
 /// 
 /// ```
-/// use lambda::lambda;
-/// use lambda::term::Term;
+/// use lambda::*;
 /// 
 /// let term_a = lambda!(x);
 /// assert_eq!(term_a, Term::var("x"));
