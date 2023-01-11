@@ -57,15 +57,15 @@
 //! 
 //! *Note: Converting a [Term] to a [LocalNamelessTerm] also does not consume the original [Term], leaving it available for further use if necessary.*
 
-mod lexer;
-mod parser;
-
 #[macro_use]
 pub mod term;
 pub use term::*;
 
 pub mod statement;
 pub use statement::*;
+
+mod lexer;
+mod parser;
 
 #[cfg(feature = "prelude")]
 pub mod prelude;

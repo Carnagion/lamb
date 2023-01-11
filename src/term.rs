@@ -219,32 +219,32 @@ macro_rules! app {
 #[macro_export]
 macro_rules! lambda {
     (λ $param: ident $($params: ident)+. $($body: tt)+) => {
-        $crate::Term::abs(stringify!($param), lambda!(λ$($params)+. $($body)+))
+        $crate::Term::abs(stringify!($param), $crate::lambda!(λ$($params)+. $($body)+))
     };
     (λ $param: ident. $($body: tt)+) => {
-        $crate::Term::abs(stringify!($param), lambda!($($body)+))
+        $crate::Term::abs(stringify!($param), $crate::lambda!($($body)+))
     };
     ($func: ident $($args: tt)+) => {
-        lambda!(~internal $($args)+).into_iter()
+        $crate::lambda!(~internal $($args)+).into_iter()
             .fold($crate::Term::var(stringify!($func)), $crate::Term::app)
     };
     (($($func: tt)+) $($args: tt)+) => {
-        lambda!(~internal $($args)+).into_iter()
+        $crate::lambda!(~internal $($args)+).into_iter()
             .fold(lambda!($($func)+), $crate::Term::app)
     };
     ($var: ident) => {
         $crate::Term::var(stringify!($var))
     };
     (($($term: tt)+)) => {
-        lambda!($($term)+)
+        $crate::lambda!($($term)+)
     };
     (~internal $func: ident $($args: tt)+) => {
-        std::iter::once($crate::Term::var(stringify!($func))).chain(lambda!(~internal $($args)+))
+        std::iter::once($crate::Term::var(stringify!($func))).chain($crate::lambda!(~internal $($args)+))
     };
     (~internal ($($func: tt)+) $($args: tt)+) => {
-        std::iter::once(lambda!($($func)+)).chain(lambda!(~internal $($args)+))
+        std::iter::once($crate::lambda!($($func)+)).chain($crate::lambda!(~internal $($args)+))
     };
     (~internal $($args: tt)+) => {
-        std::iter::once(lambda!($($args)+))
+        std::iter::once($crate::lambda!($($args)+))
     };
 }
