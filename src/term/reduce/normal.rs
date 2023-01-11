@@ -20,7 +20,8 @@ impl<T: Clone> BetaReduce<Var<T>> for Normal {
                 LocalNamelessTerm::Abs(_, body) => {
                     Self::beta_reduce_step(body);
                     body.open(0, arg);
-                    *term = mem::replace(body, LocalNamelessTerm::Var(Var::Bound(0)));
+                    // The body is replaced with a dummy value but the entire abstraction ceases to exist and cannot be accessed again, so this is ok
+                    *term = mem::replace(body, LocalNamelessTerm::var(Var::Bound(0)));
                     true
                 },
                 func => {
