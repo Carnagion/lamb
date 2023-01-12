@@ -5,7 +5,7 @@ use logos::Logos;
 pub enum Token<'s> {
     #[token("λ")]
     Lambda,
-    #[regex(r"[^λ\.()\s=#]+")]
+    #[regex(r"[^λ\.()\s=;#]+")]
     Ident(&'s str),
     #[token(".")]
     Dot,
@@ -13,10 +13,12 @@ pub enum Token<'s> {
     OpenParens,
     #[token(")")]
     CloseParens,
-    #[token("=")]
-    Equals,
     #[regex(r"\s+")]
     Whitespace,
+    #[token("=")]
+    Equals,
+    #[token(";")]
+    Semicolon,
     #[regex("#.*", Token::line_comment)]
     LineComment(&'s str),
     #[error]

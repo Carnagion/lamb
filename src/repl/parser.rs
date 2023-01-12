@@ -4,14 +4,14 @@ use crate::Statement;
 use crate::Term;
 use crate::repl::lexer::Token;
 
-fn statement_parser<'s>() -> impl Parser<Token<'s>, Statement<&'s str>, Error = Simple<Token<'s>>> {
+pub fn statement_parser<'s>() -> impl Parser<Token<'s>, Statement<&'s str>, Error = Simple<Token<'s>>> {
     ident_parser().then_ignore(just(Token::Equals).then_ignore(filler_parser()))
         .then(term_parser())
-        .then_ignore(just(Token::Dot).then_ignore(filler_parser()))
+        .then_ignore(just(Token::Semicolon).then_ignore(filler_parser()))
         .map(|(name, term)| Statement::bind(name, term))
 }
 
-fn term_parser<'s>() -> impl Parser<Token<'s>, Term<&'s str>, Error = Simple<Token<'s>>> {
+pub fn term_parser<'s>() -> impl Parser<Token<'s>, Term<&'s str>, Error = Simple<Token<'s>>> {
     recursive(|term| {
         let var = ident_parser().map(Term::var)
             .labelled("variable");
@@ -41,7 +41,7 @@ fn term_parser<'s>() -> impl Parser<Token<'s>, Term<&'s str>, Error = Simple<Tok
     })
 }
 
-fn ident_parser<'s>() -> impl Parser<Token<'s>, &'s str, Error = Simple<Token<'s>>> + Clone {
+pub fn ident_parser<'s>() -> impl Parser<Token<'s>, &'s str, Error = Simple<Token<'s>>> + Clone {
     let ident = select! {
         Token::Ident(ident) => ident,
     };
@@ -49,7 +49,7 @@ fn ident_parser<'s>() -> impl Parser<Token<'s>, &'s str, Error = Simple<Token<'s
         .labelled("identifier")
 }
 
-fn filler_parser<'s>() -> impl Parser<Token<'s>, Vec<Token<'s>>, Error = Simple<Token<'s>>> + Clone {
+pub fn filler_parser<'s>() -> impl Parser<Token<'s>, Vec<Token<'s>>, Error = Simple<Token<'s>>> + Clone {
     just(Token::Whitespace)
         .or(filter(|token| matches!(token, Token::LineComment(_))))
         .repeated()
