@@ -1,3 +1,7 @@
+use std::fmt::Display;
+use std::fmt::Formatter;
+use std::fmt::Result as FmtResult;
+
 use logos::Lexer;
 use logos::Logos;
 
@@ -28,5 +32,23 @@ pub enum Token<'s> {
 impl Token<'_> {
     fn line_comment<'s>(lexer: &Lexer<'s, Token<'s>>) -> &'s str {
         &lexer.slice()[1..]
+    }
+}
+
+impl Display for Token<'_> {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
+        let str = match self {
+            Self::Lambda => "λ",
+            Self::Ident(ident) => ident,
+            Self::Dot => ".",
+            Self::OpenParens => "(",
+            Self::CloseParens => ")",
+            Self::Whitespace => "whitespace",
+            Self::Equals => "=",
+            Self::Semicolon => ";",
+            Self::LineComment(_) => "comment",
+            Self::Unknown => "unknown",
+        };
+        write!(formatter, "{}", str)
     }
 }
