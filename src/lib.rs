@@ -66,5 +66,3 @@ pub mod prelude;
 
 #[cfg(feature = "repl")]
 pub mod repl;
-#[cfg(feature = "repl")]
-pub use repl::*;
