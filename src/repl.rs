@@ -1,5 +1,9 @@
 pub mod statement;
 pub use statement::*;
 
-mod lexer;
-mod parser;
+pub mod command;
+pub use command::*;
+
+pub mod lexer;
+
+pub mod parser;

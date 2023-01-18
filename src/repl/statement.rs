@@ -18,7 +18,7 @@ impl<T> Statement<T> {
 impl<T: Display> Display for Statement<T> {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         match self {
-            Self::Bind(name, term) => write!(formatter, "{} = {}.", name, term),
+            Self::Bind(name, term) => write!(formatter, "{} = {};", name, term),
         }
     }
 }
