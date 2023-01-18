@@ -31,7 +31,7 @@ pub trait BetaReduce<T> {
     where
         P: FnMut(&Term<T>, usize) -> bool, {
             (0..).into_iter()
-                .take_while(|count| predicate(term, *count) || Self::beta_reduce_step(term))
+                .take_while(|count| predicate(term, *count) && Self::beta_reduce_step(term))
                 .count()
         }
     
