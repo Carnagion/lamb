@@ -1,17 +1,25 @@
 use chumsky::prelude::*;
 
-use crate::Statement;
 use crate::Term;
+use crate::repl::Command;
+use crate::repl::Statement;
 use crate::repl::lexer::Token;
 
-pub fn statement_parser<'s>() -> impl Parser<Token<'s>, Statement<&'s str>, Error = Simple<Token<'s>>> {
+pub fn command_parser<'s>() -> impl Parser<Token<'s>, Command<String>, Error = Simple<Token<'s>>> {
+    statement_parser().repeated()
+        .at_least(1)
+        .map(Command::Exec)
+        .or(term_parser().map(Command::Reduce))
+}
+
+pub fn statement_parser<'s>() -> impl Parser<Token<'s>, Statement<String>, Error = Simple<Token<'s>>> {
     ident_parser().then_ignore(just(Token::Equals).then_ignore(filler_parser()))
         .then(term_parser())
         .then_ignore(just(Token::Semicolon).then_ignore(filler_parser()))
         .map(|(name, term)| Statement::bind(name, term))
 }
 
-pub fn term_parser<'s>() -> impl Parser<Token<'s>, Term<&'s str>, Error = Simple<Token<'s>>> {
+pub fn term_parser<'s>() -> impl Parser<Token<'s>, Term<String>, Error = Simple<Token<'s>>> {
     recursive(|term| {
         let var = ident_parser().map(Term::var)
             .labelled("variable");
@@ -41,9 +49,9 @@ pub fn term_parser<'s>() -> impl Parser<Token<'s>, Term<&'s str>, Error = Simple
     })
 }
 
-pub fn ident_parser<'s>() -> impl Parser<Token<'s>, &'s str, Error = Simple<Token<'s>>> + Clone {
+pub fn ident_parser<'s>() -> impl Parser<Token<'s>, String, Error = Simple<Token<'s>>> + Clone {
     let ident = select! {
-        Token::Ident(ident) => ident,
+        Token::Ident(ident) => ident.to_string(),
     };
     ident.then_ignore(filler_parser())
         .labelled("identifier")
