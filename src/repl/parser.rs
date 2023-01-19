@@ -18,7 +18,10 @@ pub fn command_parser<'s>() -> impl Parser<Token<'s>, Command<String>, Error = S
                     .map(Command::Display))
                 .or(just(Token::Ident("debug")).ignore_then(filler_parser())
                     .ignore_then(ident_parser())
-                    .map(Command::Debug)))
+                    .map(Command::Debug))
+                .or(just(Token::Ident("limit")).ignore_then(filler_parser())
+                    .ignore_then(number_parser().or_not())
+                    .map(Command::Limit)))
             .then_ignore(filler_parser()))
 }
 
@@ -65,6 +68,14 @@ pub fn ident_parser<'s>() -> impl Parser<Token<'s>, String, Error = Simple<Token
     };
     ident.then_ignore(filler_parser())
         .labelled("identifier")
+}
+
+pub fn number_parser<'s>() -> impl Parser<Token<'s>, usize, Error = Simple<Token<'s>>> + Clone {
+    let number = select! {
+        Token::Number(num) => num,
+    };
+    number.then_ignore(filler_parser())
+        .labelled("number")
 }
 
 pub fn filler_parser<'s>() -> impl Parser<Token<'s>, Vec<Token<'s>>, Error = Simple<Token<'s>>> + Clone {

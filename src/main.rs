@@ -26,7 +26,7 @@ use lambda::repl::parser::*;
 const REPORT_KIND_INFO: ReportKind = ReportKind::Custom("Info", Color::Green);
 
 fn main() -> Result<(), IoError> {
-    let reduce_limit = 1000;
+    let mut reduce_limit = 1000;
     let mut binds = HashMap::new();
 
     let mut color_gen = ColorGenerator::new();
@@ -83,6 +83,11 @@ fn main() -> Result<(), IoError> {
                 Some(term) => println!("{:?}", term),
                 None => report_binding_missing(&source, name, color_gen.next())?,
             },
+            Command::Limit(Some(limit)) => {
+                reduce_limit = limit;
+                report_limit_set(&source, reduce_limit, color_gen.next())?;
+            },
+            Command::Limit(None) => report_reduce_limit(&source, reduce_limit, color_gen.next())?,
             Command::Exit => break,
         }
     }
@@ -146,6 +151,20 @@ fn report_binding_overwritten(source: impl AsRef<str>, name: impl AsRef<str>, co
 fn report_binding_missing(source: impl AsRef<str>, name: impl AsRef<str>, color: Color) -> Result<(), IoError> {
     Report::<Range<usize>>::build(ReportKind::Warning, (), 0)
         .with_message(format!("No binding named {}", name.as_ref().fg(color)))
+        .finish()
+        .print(Source::from(source))
+}
+
+fn report_limit_set(source: impl AsRef<str>, reduce_limit: usize, color: Color) -> Result<(), IoError> {
+    Report::<Range<usize>>::build(REPORT_KIND_INFO, (), 0)
+        .with_message(format!("Reduction limit set to {}", reduce_limit.fg(color)))
+        .finish()
+        .print(Source::from(source))
+}
+
+fn report_reduce_limit(source: impl AsRef<str>, reduce_limit: usize, color: Color) -> Result<(), IoError> {
+    Report::<Range<usize>>::build(REPORT_KIND_INFO, (), 0)
+        .with_message(format!("Current reduction limit is {}", reduce_limit.fg(color)))
         .finish()
         .print(Source::from(source))
 }

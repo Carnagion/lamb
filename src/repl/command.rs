@@ -7,5 +7,6 @@ pub enum Command<T> {
     Exec(Vec<Statement<T>>),
     Display(T),
     Debug(T),
+    Limit(Option<usize>),
     Exit,
 }

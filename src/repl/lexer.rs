@@ -27,6 +27,8 @@ pub enum Token<'s> {
     LineComment(&'s str),
     #[token(":")]
     Colon,
+    #[regex("[0-9]+", Token::number)]
+    Number(usize),
     #[error]
     Unknown,
 }
@@ -34,6 +36,12 @@ pub enum Token<'s> {
 impl Token<'_> {
     fn line_comment<'s>(lexer: &Lexer<'s, Token<'s>>) -> &'s str {
         &lexer.slice()[1..]
+    }
+
+    fn number<'s>(lexer: &Lexer<'s, Token<'s>>) -> Option<usize> {
+        lexer.slice()
+            .parse()
+            .ok()
     }
 }
 
@@ -50,6 +58,7 @@ impl Display for Token<'_> {
             Self::Semicolon => ";",
             Self::LineComment(_) => "comment",
             Self::Colon => ":",
+            Self::Number(_) => "number",
             Self::Unknown => "unknown",
         };
         write!(formatter, "{}", str)
