@@ -7,9 +7,9 @@ use logos::Logos;
 
 #[derive(Clone, Debug, Eq, Hash, Logos, PartialEq)]
 pub enum Token<'s> {
-    #[token("λ")]
+    #[regex(r#"[λ\\]"#, priority = 2)]
     Lambda,
-    #[regex(r"[^λ\.()\s=;#]+")]
+    #[regex(r"[\w-]+")]
     Ident(&'s str),
     #[token(".")]
     Dot,
