@@ -29,8 +29,6 @@ fn main() {
     let mut binds = HashMap::new();
 
     loop {
-        let mut color_gen = ColorGenerator::new();
-
         let mut source = String::new();
         if let Err(error) = io::stdin().read_line(&mut source) {
             report_read_error(&source, error);
@@ -44,7 +42,7 @@ fn main() {
         let command = match parse_result {
             Ok(command) => command,
             Err(errors) => {
-                report_syntax_error(&source, errors, color_gen.next());
+                report_syntax_error(&source, errors);
                 continue;
             },
         };
@@ -56,17 +54,16 @@ fn main() {
                 report_term_reduced(&source, count);
                 println!("{}", reduced.term());
                 if count >= reduce_limit {
-                    report_reduce_limit_reached(&source, reduce_limit, color_gen.next());
+                    report_reduce_limit_reached(&source, reduce_limit);
                 }
             },
             Command::Exec(statements) => for statement in statements {
                 match statement {
                     Statement::Bind(name, term) => {
                         let inserted = binds.insert(name.clone(), term);
-                        let color = color_gen.next();
-                        report_binding_added(&source, &name, color);
+                        report_binding_added(&source, &name);
                         if inserted.is_some() {
-                            report_binding_overwritten(&source, &name, color);
+                            report_binding_overwritten(&source, &name);
                         }
                     },
                 }
@@ -83,12 +80,11 @@ fn report_read_error(source: impl AsRef<str>, error: IoError) {
         .unwrap();
 }
 
-fn report_syntax_error(source: impl AsRef<str>, errors: Vec<Simple<Token>>, color: Color) {
+fn report_syntax_error(source: impl AsRef<str>, errors: Vec<Simple<Token>>) {
     errors.into_iter()
         .fold(Report::build(ReportKind::Error, (), 0)
             .with_message("Invalid syntax"), |report, error| report.with_label(Label::new(into_char_span(error.span(), &source))
-                .with_message(format!("{}", error))
-                .with_color(color)))
+                .with_message(format!("{}", error))))
         .finish()
         .eprint(Source::from(source))
         .unwrap();
@@ -102,29 +98,28 @@ fn report_term_reduced(source: impl AsRef<str>, count: usize) {
         .unwrap();
 }
 
-fn report_reduce_limit_reached(source: impl AsRef<str>, reduce_limit: usize, color: Color) {
+fn report_reduce_limit_reached(source: impl AsRef<str>, reduce_limit: usize) {
     Report::build(ReportKind::Warning, (), 0)
         .with_message("Reduction limit reached")
-        .with_label(Label::new(0..source.as_ref().chars().count())
-            .with_message("possibly divergent term")
-            .with_color(color))
-        .with_note(format!("current reduction limit is {}", reduce_limit.fg(color)))
+        .with_label(Label::new(0..source.as_ref().chars().count() - 1)
+            .with_message("possibly divergent term"))
+        .with_note(format!("current reduction limit is {}", reduce_limit))
         .finish()
         .print(Source::from(source))
         .unwrap();
 }
 
-fn report_binding_added(source: impl AsRef<str>, name: impl AsRef<str>, color: Color) {
+fn report_binding_added(source: impl AsRef<str>, name: impl AsRef<str>) {
     Report::<Range<usize>>::build(REPORT_KIND_INFO, (), 0)
-        .with_message(format!("Binding {} added", name.as_ref().fg(color)))
+        .with_message(format!("Binding {} added", name.as_ref()))
         .finish()
         .print(Source::from(source))
         .unwrap();
 }
 
-fn report_binding_overwritten(source: impl AsRef<str>, name: impl AsRef<str>, color: Color) {
+fn report_binding_overwritten(source: impl AsRef<str>, name: impl AsRef<str>) {
     Report::<Range<usize>>::build(ReportKind::Warning, (), 0)
-        .with_message(format!("Binding {} overwritten", name.as_ref().fg(color)))
+        .with_message(format!("Binding {} overwritten", name.as_ref()))
         .finish()
         .print(Source::from(source))
         .unwrap();
