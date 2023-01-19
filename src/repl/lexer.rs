@@ -25,6 +25,8 @@ pub enum Token<'s> {
     Semicolon,
     #[regex("#.*", Token::line_comment)]
     LineComment(&'s str),
+    #[token(":")]
+    Colon,
     #[error]
     Unknown,
 }
@@ -47,6 +49,7 @@ impl Display for Token<'_> {
             Self::Equals => "=",
             Self::Semicolon => ";",
             Self::LineComment(_) => "comment",
+            Self::Colon => ":",
             Self::Unknown => "unknown",
         };
         write!(formatter, "{}", str)

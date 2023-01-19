@@ -75,8 +75,11 @@ fn main() -> Result<(), IoError> {
                     },
                 }
             },
+            Command::Exit => break,
         }
     }
+
+    Ok(())
 }
 
 fn report_read_error(source: impl AsRef<str>, error: IoError) {

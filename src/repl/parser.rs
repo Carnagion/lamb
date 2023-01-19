@@ -10,6 +10,9 @@ pub fn command_parser<'s>() -> impl Parser<Token<'s>, Command<String>, Error = S
         .at_least(1)
         .map(Command::Exec)
         .or(term_parser().map(Command::Reduce))
+        .or(just(Token::Colon).ignore_then(filler_parser())
+            .ignore_then(just(Token::Ident("exit")).to(Command::Exit))
+            .then_ignore(filler_parser()))
 }
 
 pub fn statement_parser<'s>() -> impl Parser<Token<'s>, Statement<String>, Error = Simple<Token<'s>>> {

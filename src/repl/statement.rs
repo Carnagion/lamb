@@ -4,7 +4,7 @@ use std::fmt::Result as FmtResult;
 
 use crate::Term;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Statement<T> {
     Bind(T, Term<T>),
 }
