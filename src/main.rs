@@ -132,16 +132,13 @@ fn into_char_span(byte_span: Range<usize>, source: impl AsRef<str>) -> Range<usi
 
 fn into_char_index(byte_index: usize, source: impl AsRef<str>) -> usize {
     let source = source.as_ref();
+    let mut count = 0;
     let mut bytes = 0;
     source.chars()
-        .enumerate()
-        .find_map(|(index, char)| {
+        .position(|char| {
+            count += 1;
             bytes += char.len_utf8();
-            if byte_index < bytes {
-                Some(index)
-            } else {
-                None
-            }
+            byte_index < bytes
         })
-        .unwrap_or(source.chars().count())
+        .unwrap_or(count)
 }
