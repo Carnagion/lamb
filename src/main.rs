@@ -75,6 +75,14 @@ fn main() -> Result<(), IoError> {
                     },
                 }
             },
+            Command::Display(name) => match binds.get(&name) {
+                Some(term) => println!("{}", term),
+                None => report_binding_missing(&source, name, color_gen.next())?,
+            },
+            Command::Debug(name) => match binds.get(&name) {
+                Some(term) => println!("{:?}", term),
+                None => report_binding_missing(&source, name, color_gen.next())?,
+            },
             Command::Exit => break,
         }
     }
@@ -131,6 +139,13 @@ fn report_binding_added(source: impl AsRef<str>, name: impl AsRef<str>, color: C
 fn report_binding_overwritten(source: impl AsRef<str>, name: impl AsRef<str>, color: Color) -> Result<(), IoError> {
     Report::<Range<usize>>::build(ReportKind::Warning, (), 0)
         .with_message(format!("Binding {} overwritten", name.as_ref().fg(color)))
+        .finish()
+        .print(Source::from(source))
+}
+
+fn report_binding_missing(source: impl AsRef<str>, name: impl AsRef<str>, color: Color) -> Result<(), IoError> {
+    Report::<Range<usize>>::build(ReportKind::Warning, (), 0)
+        .with_message(format!("No binding named {}", name.as_ref().fg(color)))
         .finish()
         .print(Source::from(source))
 }

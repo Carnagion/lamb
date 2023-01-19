@@ -11,7 +11,13 @@ pub fn command_parser<'s>() -> impl Parser<Token<'s>, Command<String>, Error = S
         .map(Command::Exec)
         .or(term_parser().map(Command::Reduce))
         .or(just(Token::Colon).ignore_then(filler_parser())
-            .ignore_then(just(Token::Ident("exit")).to(Command::Exit))
+            .ignore_then(just(Token::Ident("exit")).to(Command::Exit)
+                .or(just(Token::Ident("display")).ignore_then(filler_parser())
+                    .ignore_then(ident_parser())
+                    .map(Command::Display))
+                .or(just(Token::Ident("debug")).ignore_then(filler_parser())
+                    .ignore_then(ident_parser())
+                    .map(Command::Debug)))
             .then_ignore(filler_parser()))
 }
 
