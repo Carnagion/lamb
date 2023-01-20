@@ -16,7 +16,7 @@ use chumsky::prelude::*;
 
 use logos::Logos;
 
-use lambda::repl::Action;
+use lambda::repl::CommandOutcome;
 use lambda::repl::Repl;
 use lambda::repl::lexer::Token;
 use lambda::repl::parser::*;
@@ -51,20 +51,20 @@ fn main() -> Result<(), IoError> {
         
         for action in repl.exec(command) {
             match action {
-                Action::TermReduced(reduced) => {
+                CommandOutcome::TermReduced(reduced) => {
                     report_term_reduced(&source, reduced.count())?;
                     println!("{}", reduced.term());
                 },
-                Action::ReduceLimitReached(limit) => report_reduce_limit_reached(&source, limit, color_gen.next())?,
-                Action::BindAdded(name) => report_binding_added(&source, name, color_gen.next())?,
-                Action::BindOverwritten(name) => {
+                CommandOutcome::ReduceLimitReached(limit) => report_reduce_limit_reached(&source, limit, color_gen.next())?,
+                CommandOutcome::BindAdded(name) => report_binding_added(&source, name, color_gen.next())?,
+                CommandOutcome::BindOverwritten(name) => {
                     let color = color_gen.next();
                     report_binding_added(&source, &name, color)?;
                     report_binding_overwritten(&source, &name, color)?;
                 },
-                Action::ReduceLimitSet(limit) => report_limit_set(&source, limit, color_gen.next())?,
-                Action::DisplayReduceLimit(limit) => report_reduce_limit(&source, limit, color_gen.next())?,
-                Action::Exit => break 'repl,
+                CommandOutcome::ReduceLimitSet(limit) => report_limit_set(&source, limit, color_gen.next())?,
+                CommandOutcome::DisplayReduceLimit(limit) => report_reduce_limit(&source, limit, color_gen.next())?,
+                CommandOutcome::Exit => break 'repl,
             }
         }
     }

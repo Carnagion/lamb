@@ -20,7 +20,7 @@ pub enum Command<T> {
     Exit,
 }
 
-pub enum Action<T> {
+pub enum CommandOutcome<T> {
     TermReduced(ReducedTerm<T>),
     ReduceLimitReached(usize),
     BindAdded(T),
@@ -42,33 +42,32 @@ impl<T> Repl<T> {
 }
 
 impl<T: Clone + Eq + Hash> Repl<T> {
-    pub fn exec(&mut self, command: Command<T>) -> Vec<Action<T>> {
+    pub fn exec(&mut self, command: Command<T>) -> Vec<CommandOutcome<T>> {
         let mut actions = Vec::with_capacity(1);
         match command {
             Command::Reduce(term) => {
                 let reduced = term.beta_reduced_limit::<Normal>(self.reduce_limit);
                 let count = reduced.count();
-                actions.push(Action::TermReduced(reduced));
+                actions.push(CommandOutcome::TermReduced(reduced));
                 if count >= self.reduce_limit {
-                    actions.push(Action::ReduceLimitReached(count));
+                    actions.push(CommandOutcome::ReduceLimitReached(count));
                 }
             },
-            Command::Exec(statements) => for statement in statements {
-                match statement {
-                    Statement::Bind(name, term) => actions.push(match self.binds.insert(name.clone(), term) {
-                        None => Action::BindAdded(name),
-                        Some(_) => Action::BindOverwritten(name),
-                    }),
-                }
-            },
+            Command::Exec(statements) => actions.extend(statements.into_iter()
+                .map(|statement| match statement {
+                    Statement::Bind(name, term) => match self.binds.insert(name.clone(), term) {
+                        None => CommandOutcome::BindAdded(name),
+                        Some(_) => CommandOutcome::BindOverwritten(name),
+                    },
+                })),
             Command::Limit(limit) => match limit {
-                None => actions.push(Action::DisplayReduceLimit(self.reduce_limit)),
+                None => actions.push(CommandOutcome::DisplayReduceLimit(self.reduce_limit)),
                 Some(limit) => {
                     self.reduce_limit = limit;
-                    actions.push(Action::ReduceLimitSet(limit));
+                    actions.push(CommandOutcome::ReduceLimitSet(limit));
                 },
             },
-            Command::Exit => actions.push(Action::Exit),
+            Command::Exit => actions.push(CommandOutcome::Exit),
         }
         actions
     }
