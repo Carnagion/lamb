@@ -1,7 +1,9 @@
 //! Traits and functions for β-reduction of [Term]s.
 
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::collections::VecDeque;
+use std::hash::Hash;
 use std::iter;
 use std::ops::Deref;
 use std::ops::DerefMut;
@@ -240,6 +242,34 @@ impl<T: Clone + Eq> Term<T> {
                 term
             },
             Self::App(func, arg) => LocalNamelessTerm::app(func.to_local_nameless(vars), arg.to_local_nameless(vars)),
+        }
+    }
+}
+
+impl<T: Clone + Eq + Hash> Term<T> {
+    /// Replaces the [Term]'s free variables in-place with the specified bindings.
+    /// 
+    /// Free variables that are not part of the provided bindings are left untouched.
+    pub fn rebind(&mut self, binds: &mut HashMap<T, Self>) {
+        self.rebind_with(binds, &mut VecDeque::new());
+    }
+
+    fn rebind_with<'t>(&'t mut self, binds: &mut HashMap<T, Self>, vars: &mut VecDeque<&'t T>) {
+        match self {
+            Self::Var(var) => if let Some(term) = binds.get(var) {
+                if vars.iter().position(|&param| param == var).is_none() {
+                    *self = term.clone();
+                }
+            },
+            Self::Abs(param, body) => {
+                vars.push_front(param);
+                body.rebind_with(binds, vars);
+                vars.pop_front();
+            },
+            Self::App(func, arg) => {
+                func.rebind_with(binds, vars);
+                arg.rebind_with(binds, vars);
+            },
         }
     }
 }

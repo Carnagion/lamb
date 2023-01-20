@@ -45,7 +45,8 @@ impl<T: Clone + Eq + Hash> Repl<T> {
     pub fn exec(&mut self, command: Command<T>) -> Vec<CommandOutcome<T>> {
         let mut actions = Vec::with_capacity(1);
         match command {
-            Command::Reduce(term) => {
+            Command::Reduce(mut term) => {
+                term.rebind(&mut self.binds);
                 let reduced = term.beta_reduced_limit(self.reduce_limit, &Normal);
                 let count = reduced.count();
                 actions.push(CommandOutcome::TermReduced(reduced));
@@ -55,9 +56,12 @@ impl<T: Clone + Eq + Hash> Repl<T> {
             },
             Command::Exec(statements) => actions.extend(statements.into_iter()
                 .map(|statement| match statement {
-                    Statement::Bind(name, term) => match self.binds.insert(name.clone(), term) {
-                        None => CommandOutcome::BindAdded(name),
-                        Some(_) => CommandOutcome::BindOverwritten(name),
+                    Statement::Bind(name, mut term) => {
+                        term.rebind(&mut self.binds);
+                        match self.binds.insert(name.clone(), term) {
+                            None => CommandOutcome::BindAdded(name),
+                            Some(_) => CommandOutcome::BindOverwritten(name),
+                        }
                     },
                 })),
             Command::Limit(limit) => match limit {
