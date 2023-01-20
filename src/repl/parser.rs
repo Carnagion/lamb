@@ -14,14 +14,6 @@ pub fn command_parser<'s>() -> impl Parser<Token<'s>, Command<String>, Error = S
 
     let exit = just(Token::Ident("exit")).ignore_then(filler_parser())
         .to(Command::Exit);
-
-    let display = just(Token::Ident("display")).ignore_then(filler_parser())
-        .ignore_then(ident_parser())
-        .map(Command::Display);
-        
-    let debug = just(Token::Ident("debug")).ignore_then(filler_parser())
-        .ignore_then(ident_parser())
-        .map(Command::Debug);
     
     let limit = just(Token::Ident("limit")).ignore_then(filler_parser())
         .ignore_then(number_parser().or_not())
@@ -29,7 +21,7 @@ pub fn command_parser<'s>() -> impl Parser<Token<'s>, Command<String>, Error = S
     
     exec.or(reduce)
         .or(just(Token::Colon).ignore_then(filler_parser())
-            .ignore_then(choice((exit, display, debug, limit)))
+            .ignore_then(exit.or(limit))
             .then_ignore(filler_parser()))
 }
 

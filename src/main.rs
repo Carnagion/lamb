@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::io;
 use std::io::Error as IoError;
 use std::io::Write;
@@ -17,21 +16,18 @@ use chumsky::prelude::*;
 
 use logos::Logos;
 
-use lambda::Normal;
-use lambda::repl::Command;
-use lambda::repl::Statement;
+use lambda::repl::Action;
+use lambda::repl::Repl;
 use lambda::repl::lexer::Token;
 use lambda::repl::parser::*;
 
 const REPORT_KIND_INFO: ReportKind = ReportKind::Custom("Info", Color::Green);
 
 fn main() -> Result<(), IoError> {
-    let mut reduce_limit = 1000;
-    let mut binds = HashMap::new();
-
+    let mut repl = Repl::new();
     let mut color_gen = ColorGenerator::new();
 
-    loop {
+    'repl: loop {
         print!("λ> ");
         io::stdout().flush()?;
 
@@ -53,42 +49,23 @@ fn main() -> Result<(), IoError> {
             },
         };
         
-        match command {
-            Command::Reduce(term) => {
-                let reduced = term.beta_reduced_limit::<Normal>(reduce_limit);
-                let count = reduced.count();
-                report_term_reduced(&source, count)?;
-                println!("{}", reduced.term());
-                if count >= reduce_limit {
-                    report_reduce_limit_reached(&source, reduce_limit, color_gen.next())?;
-                }
-            },
-            Command::Exec(statements) => for statement in statements {
-                match statement {
-                    Statement::Bind(name, term) => {
-                        let color = color_gen.next();
-                        let inserted = binds.insert(name.clone(), term);
-                        report_binding_added(&source, &name, color)?;
-                        if inserted.is_some() {
-                            report_binding_overwritten(&source, &name, color)?;
-                        }
-                    },
-                }
-            },
-            Command::Display(name) => match binds.get(&name) {
-                Some(term) => println!("{}", term),
-                None => report_binding_missing(&source, name, color_gen.next())?,
-            },
-            Command::Debug(name) => match binds.get(&name) {
-                Some(term) => println!("{:?}", term),
-                None => report_binding_missing(&source, name, color_gen.next())?,
-            },
-            Command::Limit(Some(limit)) => {
-                reduce_limit = limit;
-                report_limit_set(&source, reduce_limit, color_gen.next())?;
-            },
-            Command::Limit(None) => report_reduce_limit(&source, reduce_limit, color_gen.next())?,
-            Command::Exit => break,
+        for action in repl.exec(command) {
+            match action {
+                Action::TermReduced(reduced) => {
+                    report_term_reduced(&source, reduced.count())?;
+                    println!("{}", reduced.term());
+                },
+                Action::ReduceLimitReached(limit) => report_reduce_limit_reached(&source, limit, color_gen.next())?,
+                Action::BindAdded(name) => report_binding_added(&source, name, color_gen.next())?,
+                Action::BindOverwritten(name) => {
+                    let color = color_gen.next();
+                    report_binding_added(&source, &name, color)?;
+                    report_binding_overwritten(&source, &name, color)?;
+                },
+                Action::ReduceLimitSet(limit) => report_limit_set(&source, limit, color_gen.next())?,
+                Action::DisplayReduceLimit(limit) => report_reduce_limit(&source, limit, color_gen.next())?,
+                Action::Exit => break 'repl,
+            }
         }
     }
 
@@ -148,13 +125,6 @@ fn report_binding_overwritten(source: impl AsRef<str>, name: impl AsRef<str>, co
         .print(Source::from(source))
 }
 
-fn report_binding_missing(source: impl AsRef<str>, name: impl AsRef<str>, color: Color) -> Result<(), IoError> {
-    Report::<Range<usize>>::build(ReportKind::Warning, (), 0)
-        .with_message(format!("No binding named {}", name.as_ref().fg(color)))
-        .finish()
-        .print(Source::from(source))
-}
-
 fn report_limit_set(source: impl AsRef<str>, reduce_limit: usize, color: Color) -> Result<(), IoError> {
     Report::<Range<usize>>::build(REPORT_KIND_INFO, (), 0)
         .with_message(format!("Reduction limit set to {}", reduce_limit.fg(color)))
@@ -171,18 +141,5 @@ fn report_reduce_limit(source: impl AsRef<str>, reduce_limit: usize, color: Colo
 
 fn into_char_span(byte_span: Range<usize>, source: impl AsRef<str>) -> Range<usize> {
     let source = source.as_ref();
-    into_char_index(byte_span.start(), source)..into_char_index(byte_span.end(), source)
-}
-
-fn into_char_index(byte_index: usize, source: impl AsRef<str>) -> usize {
-    let source = source.as_ref();
-    let mut count = 0;
-    let mut bytes = 0;
-    source.chars()
-        .position(|char| {
-            count += 1;
-            bytes += char.len_utf8();
-            byte_index < bytes
-        })
-        .unwrap_or(count)
+    source[..byte_span.start()].chars().count()..source[..byte_span.end()].chars().count()
 }
