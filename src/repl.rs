@@ -46,7 +46,7 @@ impl<T: Clone + Eq + Hash> Repl<T> {
         let mut actions = Vec::with_capacity(1);
         match command {
             Command::Reduce(term) => {
-                let reduced = term.beta_reduced_limit::<Normal>(self.reduce_limit);
+                let reduced = term.beta_reduced_limit(self.reduce_limit, &Normal);
                 let count = reduced.count();
                 actions.push(CommandOutcome::TermReduced(reduced));
                 if count >= self.reduce_limit {

@@ -19,25 +19,25 @@ pub trait BetaReduce<T> {
     /// Performs one step of β-reduction on the [Term] in-place, and returns a value indicating whether reduction was performed or not.
     /// 
     /// Implementations of this function should return `false` if the [Term] is in β-normal form (i.e. no more β-reduction is possible).
-    fn beta_reduce_step(term: &mut Term<T>) -> bool;
+    fn beta_reduce_step(&self, term: &mut Term<T>) -> bool;
 
     /// Attempts to fully β-reduce the [Term] in-place until it reaches β-normal form, and returns the number of reduction steps performed.
-    fn beta_reduce(term: &mut Term<T>) -> usize {
-        iter::from_fn(|| Self::beta_reduce_step(term).then_some(())).count()
+    fn beta_reduce(&self, term: &mut Term<T>) -> usize {
+        iter::from_fn(|| self.beta_reduce_step(term).then_some(())).count()
     }
 
     /// Attempts to β-reduce the [Term] in-place until it reaches β-normal form or the predicate returns `false`, and returns the number of reduction steps performed.
-    fn beta_reduce_while<P>(term: &mut Term<T>, mut predicate: P) -> usize
+    fn beta_reduce_while<P>(&self, term: &mut Term<T>, mut predicate: P) -> usize
     where
         P: FnMut(&Term<T>, usize) -> bool, {
             (0..).into_iter()
-                .take_while(|count| predicate(term, *count) && Self::beta_reduce_step(term))
+                .take_while(|count| predicate(term, *count) && self.beta_reduce_step(term))
                 .count()
         }
     
     /// Attempts to β-reduce the [Term] in-place until it reaches β-normal form or the number of reduction steps performed crosses a limit, and returns the latter.
-    fn beta_reduce_limit(term: &mut Term<T>, limit: usize) -> usize {
-        Self::beta_reduce_while(term, |_, count| count < limit)
+    fn beta_reduce_limit(&self, term: &mut Term<T>, limit: usize) -> usize {
+        self.beta_reduce_while(term, |_, count| count < limit)
     }
 }
 
@@ -79,26 +79,26 @@ pub type LocalNamelessTerm<T> = Term<Var<T>>;
 
 impl<T: Clone> LocalNamelessTerm<T> {
     /// Fully β-reduces the [LocalNamelessTerm] in-place using the specified [BetaReduce] `impl`ementation.
-    pub fn beta_reduce<B: BetaReduce<Var<T>>>(&mut self) -> usize {
-        B::beta_reduce(self)
+    pub fn beta_reduce<B: BetaReduce<Var<T>>>(&mut self, reducer: &B) -> usize {
+        reducer.beta_reduce(self)
     }
 
     /// β-reduces the [LocalNamelessTerm] in-place using the specified [BetaReduce] `impl`ementation while a predicate holds true.
-    pub fn beta_reduce_while<B, P>(&mut self, predicate: P) -> usize
+    pub fn beta_reduce_while<B, P>(&mut self, predicate: P, reducer: &B) -> usize
     where
         B: BetaReduce<Var<T>>,
         P: FnMut(&Self, usize) -> bool, {
-            B::beta_reduce_while(self, predicate)
+            reducer.beta_reduce_while(self, predicate)
         }
     
     /// β-reduces the [LocalNamelessTerm] in-place up to a certain limit using the specified [BetaReduce] `impl`ementation.
-        pub fn beta_reduce_limit<B: BetaReduce<Var<T>>>(&mut self, limit: usize) -> usize {
-        B::beta_reduce_limit(self, limit)
+    pub fn beta_reduce_limit<B: BetaReduce<Var<T>>>(&mut self, limit: usize, reducer: &B) -> usize {
+        reducer.beta_reduce_limit(self, limit)
     }
 
     /// β-reduces the [LocalNamelessTerm] once using the specified [BetaReduce] `impl`ementation.
-    pub fn beta_reduce_step<B: BetaReduce<Var<T>>>(&mut self) -> bool {
-        B::beta_reduce_step(self)
+    pub fn beta_reduce_step<B: BetaReduce<Var<T>>>(&mut self, reducer: &B) -> bool {
+        reducer.beta_reduce_step(self)
     }
 
     fn open(&mut self, depth: usize, replacement: &Self) {
@@ -198,31 +198,31 @@ impl<T> DerefMut for ReducedTerm<T> {
 
 impl<T: Clone + Eq> Term<T> {
     /// Returns a fully β-reduced version of the [Term] wrapped in a [ReducedTerm] using the specified [BetaReduce] `impl`ementation.
-    pub fn beta_reduced<B: BetaReduce<Var<T>>>(&self) -> ReducedTerm<T> {
+    pub fn beta_reduced<B: BetaReduce<Var<T>>>(&self, reducer: &B) -> ReducedTerm<T> {
         let mut local_nameless = LocalNamelessTerm::from(self);
         ReducedTerm {
-            count: local_nameless.beta_reduce::<B>(),
+            count: local_nameless.beta_reduce(reducer),
             term: (&local_nameless).try_into().unwrap(),
         }
     }
 
     /// Returns a version of the [Term] β-reduced using the specified [BetaReduce] `impl`ementation until the predicate returns `false`, wrapped in a [ReducedTerm].
-    pub fn beta_reduced_while<B, P>(&self, predicate: P) -> ReducedTerm<T>
+    pub fn beta_reduced_while<B, P>(&self, predicate: P, reducer: &B) -> ReducedTerm<T>
     where
         B: BetaReduce<Var<T>>,
         P: FnMut(&LocalNamelessTerm<T>, usize) -> bool, {
             let mut local_nameless = LocalNamelessTerm::from(self);
             ReducedTerm {
-                count: local_nameless.beta_reduce_while::<B, P>(predicate),
+                count: local_nameless.beta_reduce_while::<B, P>(predicate, reducer),
                 term: (&local_nameless).try_into().unwrap(),
             }
         }
 
     /// Returns a version of the [Term] β-reduced up to a certain limit using the specified [BetaReduce] `impl`ementation, wrapped in a [ReducedTerm].
-    pub fn beta_reduced_limit<B: BetaReduce<Var<T>>>(&self, limit: usize) -> ReducedTerm<T> {
+    pub fn beta_reduced_limit<B: BetaReduce<Var<T>>>(&self, limit: usize, reducer: &B) -> ReducedTerm<T> {
         let mut local_nameless = LocalNamelessTerm::from(self);
         ReducedTerm {
-            count: local_nameless.beta_reduce_limit::<B>(limit),
+            count: local_nameless.beta_reduce_limit::<B>(limit, reducer),
             term: (&local_nameless).try_into().unwrap(),
         }
     }
