@@ -1,3 +1,5 @@
+//! Standard [Term]s and combinators.
+
 use crate::Term;
 
 /// The function composition combinator `B`.
