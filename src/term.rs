@@ -118,7 +118,7 @@ macro_rules! abs {
         $crate::Term::abs(stringify!($param), $body)
     };
     ($param: ident $($rest: ident)+. $body: expr) => {{
-        $crate::Term::abs(stringify!($param), abs!($($rest)+. $body))
+        $crate::Term::abs(stringify!($param), $crate::abs!($($rest)+. $body))
     }};
 }
 
@@ -227,7 +227,7 @@ macro_rules! lambda {
     };
     (($($func: tt)+) $($args: tt)+) => {
         $crate::lambda!(~internal $($args)+).into_iter()
-            .fold(lambda!($($func)+), $crate::Term::app)
+            .fold($crate::lambda!($($func)+), $crate::Term::app)
     };
     ($var: ident) => {
         $crate::Term::var(stringify!($var))
