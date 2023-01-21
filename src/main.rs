@@ -33,7 +33,7 @@ fn main() -> Result<(), IoError> {
 
         let mut source = String::new();
         if let Err(error) = io::stdin().read_line(&mut source) {
-            report_read_error(&source, error);
+            report_read_error(&source, error)?;
             continue;
         }
         
@@ -72,12 +72,11 @@ fn main() -> Result<(), IoError> {
     Ok(())
 }
 
-fn report_read_error(source: impl AsRef<str>, error: IoError) {
+fn report_read_error(source: impl AsRef<str>, error: IoError) -> Result<(), IoError> {
     Report::<Range<usize>>::build(ReportKind::Error, (), 0)
         .with_message(format!("{}", error))
         .finish()
         .print(Source::from(source))
-        .unwrap();
 }
 
 fn report_syntax_error(source: impl AsRef<str>, errors: Vec<Simple<Token>>, color_gen: &mut ColorGenerator) -> Result<(), IoError> {
