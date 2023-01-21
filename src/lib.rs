@@ -42,7 +42,7 @@
 //! use lambda::*;
 //! 
 //! let term = lambda!((λ x. z) ((λ w. w w w) (λ w. w w w)));
-//! let reduced = term.beta_reduced::<Normal>();
+//! let reduced = term.beta_reduced(&Normal);
 //! ```
 //! 
 //! The default `impl`ementations of [BetaReduce] rely on locally nameless representations of [Term]s in order to safely reduce them without needing to α-convert identifiers.
@@ -52,7 +52,7 @@
 //! 
 //! let term = lambda!((λ x. z) ((λ w. w w w) (λ w. w w w)));
 //! let mut local_nameless_term = LocalNamelessTerm::from(&term);
-//! local_nameless_term.beta_reduce::<Normal>();
+//! local_nameless_term.beta_reduce(&Normal);
 //! ```
 //! 
 //! *Note: Converting a [Term] to a [LocalNamelessTerm] also does not consume the original [Term], leaving it available for further use if necessary.*
