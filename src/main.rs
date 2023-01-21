@@ -62,8 +62,8 @@ fn main() -> Result<(), IoError> {
                     report_binding_added(&source, &name, color)?;
                     report_binding_overwritten(&source, &name, color)?;
                 },
-                CommandOutcome::ReduceLimitSet(limit) => report_limit_set(&source, limit, color_gen.next())?,
-                CommandOutcome::DisplayReduceLimit(limit) => report_reduce_limit(&source, limit, color_gen.next())?,
+                CommandOutcome::ReduceLimitGot(limit) => report_reduce_limit_got(&source, limit, color_gen.next())?,
+                CommandOutcome::ReduceLimitSet(limit) => report_reduce_limit_set(&source, limit, color_gen.next())?,
                 CommandOutcome::Exit => break 'repl,
             }
         }
@@ -125,14 +125,14 @@ fn report_binding_overwritten(source: impl AsRef<str>, name: impl AsRef<str>, co
         .print(Source::from(source))
 }
 
-fn report_limit_set(source: impl AsRef<str>, reduce_limit: usize, color: Color) -> Result<(), IoError> {
+fn report_reduce_limit_set(source: impl AsRef<str>, reduce_limit: usize, color: Color) -> Result<(), IoError> {
     Report::<Range<usize>>::build(REPORT_KIND_INFO, (), 0)
         .with_message(format!("Reduction limit set to {}", reduce_limit.fg(color)))
         .finish()
         .print(Source::from(source))
 }
 
-fn report_reduce_limit(source: impl AsRef<str>, reduce_limit: usize, color: Color) -> Result<(), IoError> {
+fn report_reduce_limit_got(source: impl AsRef<str>, reduce_limit: usize, color: Color) -> Result<(), IoError> {
     Report::<Range<usize>>::build(REPORT_KIND_INFO, (), 0)
         .with_message(format!("Current reduction limit is {}", reduce_limit.fg(color)))
         .finish()

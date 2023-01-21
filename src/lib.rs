@@ -57,6 +57,8 @@
 //! 
 //! *Note: Converting a [Term] to a [LocalNamelessTerm] also does not consume the original [Term], leaving it available for further use if necessary.*
 
+#![warn(missing_docs)]
+
 #[macro_use]
 pub mod term;
 pub use term::*;
