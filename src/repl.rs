@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 
+use crate::LocalNamelessTerm;
 use crate::Normal;
 use crate::ReducedTerm;
 use crate::Term;
@@ -31,7 +32,7 @@ pub enum CommandOutcome<T> {
 }
 
 pub struct Repl<T> {
-    binds: HashMap<T, Term<T>>,
+    binds: HashMap<T, LocalNamelessTerm<T>>,
     reduce_limit: usize,
 }
 
@@ -45,20 +46,24 @@ impl<T: Clone + Eq + Hash> Repl<T> {
     pub fn exec(&mut self, command: Command<T>) -> Vec<CommandOutcome<T>> {
         let mut actions = Vec::with_capacity(1);
         match command {
-            Command::Reduce(mut term) => {
-                term.rebind(&mut self.binds);
-                let reduced = term.beta_reduced_limit(self.reduce_limit, &Normal);
-                let count = reduced.count();
-                actions.push(CommandOutcome::TermReduced(reduced));
+            Command::Reduce(term) => {
+                let mut local_nameless = LocalNamelessTerm::from(&term);
+                local_nameless.rebind(&mut self.binds);
+                let count = local_nameless.beta_reduce_limit(self.reduce_limit, &Normal);
+                actions.push(CommandOutcome::TermReduced(ReducedTerm {
+                    count,
+                    term: Term::try_from(&local_nameless).unwrap(),
+                }));
                 if count >= self.reduce_limit {
                     actions.push(CommandOutcome::ReduceLimitReached(count));
                 }
             },
             Command::Exec(statements) => actions.extend(statements.into_iter()
                 .map(|statement| match statement {
-                    Statement::Bind(name, mut term) => {
-                        term.rebind(&mut self.binds);
-                        match self.binds.insert(name.clone(), term) {
+                    Statement::Bind(name, term) => {
+                        let mut local_nameless = LocalNamelessTerm::from(&term);
+                        local_nameless.rebind(&mut self.binds);
+                        match self.binds.insert(name.clone(), local_nameless) {
                             None => CommandOutcome::BindAdded(name),
                             Some(_) => CommandOutcome::BindOverwritten(name),
                         }

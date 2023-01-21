@@ -153,6 +153,25 @@ impl<T: Clone> LocalNamelessTerm<T> {
     }
 }
 
+impl<T: Clone + Eq + Hash> LocalNamelessTerm<T> {
+    /// Replaces the [LocalNamelessTerm]'s free variables in-place with the specified bindings.
+    /// 
+    /// Free variables that are not part of the provided bindings are left untouched.
+    pub fn rebind<'t>(&'t mut self, binds: &mut HashMap<T, Self>) {
+        match self {
+            Self::Var(Var::Bound(_)) => (),
+            Self::Var(Var::Free(var)) => if let Some(term) = binds.get(var) {
+                *self = term.clone();
+            },
+            Self::Abs(_, body) => body.rebind(binds),
+            Self::App(func, arg) => {
+                func.rebind(binds);
+                arg.rebind(binds);
+            },
+        }
+    }
+}
+
 impl<T: Clone + Eq> From<&Term<T>> for LocalNamelessTerm<T> {
     fn from(classic: &Term<T>) -> Self {
         classic.to_local_nameless(&mut VecDeque::new())
@@ -162,25 +181,15 @@ impl<T: Clone + Eq> From<&Term<T>> for LocalNamelessTerm<T> {
 /// A wrapper around a β-reduced [Term], storing along with it the number of reduction steps performed.
 #[derive(Debug)]
 pub struct ReducedTerm<T> {
-    count: usize,
-    term: Term<T>,
-}
-
-impl<T> ReducedTerm<T> {
     /// The number of β-reduction steps performed when β-reducing the [Term].
-    pub fn count(&self) -> usize {
-        self.count
-    }
-
+    pub count: usize,
     /// The β-reduced [Term].
-    pub fn term(&self) -> &Term<T> {
-        &self.term
-    }
+    pub term: Term<T>,
 }
 
 impl<T> AsRef<Term<T>> for ReducedTerm<T> {
     fn as_ref(&self) -> &Term<T> {
-        self.term()
+        &self.term
     }
 }
 
@@ -188,7 +197,7 @@ impl<T> Deref for ReducedTerm<T> {
     type Target = Term<T>;
 
     fn deref(&self) -> &Self::Target {
-        self.term()
+        &self.term
     }
 }
 
@@ -242,34 +251,6 @@ impl<T: Clone + Eq> Term<T> {
                 term
             },
             Self::App(func, arg) => LocalNamelessTerm::app(func.to_local_nameless(vars), arg.to_local_nameless(vars)),
-        }
-    }
-}
-
-impl<T: Clone + Eq + Hash> Term<T> {
-    /// Replaces the [Term]'s free variables in-place with the specified bindings.
-    /// 
-    /// Free variables that are not part of the provided bindings are left untouched.
-    pub fn rebind(&mut self, binds: &mut HashMap<T, Self>) {
-        self.rebind_with(binds, &mut VecDeque::new());
-    }
-
-    fn rebind_with<'t>(&'t mut self, binds: &mut HashMap<T, Self>, vars: &mut VecDeque<&'t T>) {
-        match self {
-            Self::Var(var) => if let Some(term) = binds.get(var) {
-                if vars.iter().position(|&param| param == var).is_none() {
-                    *self = term.clone();
-                }
-            },
-            Self::Abs(param, body) => {
-                vars.push_front(param);
-                body.rebind_with(binds, vars);
-                vars.pop_front();
-            },
-            Self::App(func, arg) => {
-                func.rebind_with(binds, vars);
-                arg.rebind_with(binds, vars);
-            },
         }
     }
 }

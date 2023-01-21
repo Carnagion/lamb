@@ -52,8 +52,8 @@ fn main() -> Result<(), IoError> {
         for action in repl.exec(command) {
             match action {
                 CommandOutcome::TermReduced(reduced) => {
-                    report_term_reduced(&source, reduced.count())?;
-                    println!("{}", reduced.term());
+                    report_term_reduced(&source, reduced.count)?;
+                    println!("{}", reduced.term);
                 },
                 CommandOutcome::ReduceLimitReached(limit) => report_reduce_limit_reached(&source, limit, color_gen.next())?,
                 CommandOutcome::BindAdded(name) => report_binding_added(&source, name, color_gen.next())?,
