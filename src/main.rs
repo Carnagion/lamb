@@ -16,10 +16,10 @@ use chumsky::prelude::*;
 
 use logos::Logos;
 
-use lambda::repl::CommandOutcome;
-use lambda::repl::Repl;
-use lambda::repl::lexer::Token;
-use lambda::repl::parser::*;
+use lamb::repl::CommandOutcome;
+use lamb::repl::Repl;
+use lamb::repl::lexer::Token;
+use lamb::repl::parser::*;
 
 const REPORT_KIND_INFO: ReportKind = ReportKind::Custom("Info", Color::Green);
 

@@ -1,5 +1,5 @@
 [package]
-name = "lambda"
+name = "lamb"
 version = "0.1.0"
 edition = "2021"
 
@@ -14,5 +14,5 @@ repl = ["dep:ariadne", "dep:chumsky", "dep:logos"]
 prelude = []
 
 [[bin]]
-name = "lambda"
+name = "lamb"
 required-features = ["repl"]
