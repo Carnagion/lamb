@@ -1,7 +1,15 @@
 [package]
 name = "lamb"
+description = "Pure untyped lambda calculus in safe Rust."
 version = "0.1.0"
 edition = "2021"
+authors = ["Indraneel Mahendrakumar"]
+repository = "https://github.com/Carnagion/lamb"
+documentation = "https://docs.rs/lamb"
+readme = "README.md"
+license = "MIT"
+keywords = ["lambda-calculus", "functional-programming", "programming-language", "repl", "interpreter"]
+categories = ["command-line-utilities", "compilers", "mathematics", "parser-implementations"]
 
 [dependencies]
 ariadne = { version = "0.1.5", optional = true }
